@@ -17,13 +17,32 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
-    <script src="../js/zipcodes.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/use-postal-ph@1.0.1/dist/index.js"></script>
     <style>
         .form-section { margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
-        /* .form-section h3 removed to use style.css .admin-form h3 */
-        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
-        .form-col { flex: 1; }
-        /* Input styles removed to use style.css */
+        
+        /* Flexbox Layout */
+        .form-row { 
+            display: flex; 
+            gap: 15px; 
+            margin-bottom: 15px; 
+            flex-wrap: wrap; /* Safety for small screens */
+        }
+        
+        .form-col { 
+            flex: 1; 
+            min-width: 0; /* Critical: Prevents flex items from overflowing */
+        }
+
+        /* Fix overlapping inputs */
+        .form-col input, 
+        .form-col select,
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            box-sizing: border-box !important; /* Keeps padding INSIDE the 100% width */
+        }
+
         .checkbox-container { display: flex; align-items: center; gap: 5px; margin: 10px 0; }
         input[type="file"] { padding: 5px; }
     </style>
@@ -229,26 +248,20 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                             <label class="id-label-header"><i class="fas fa-id-card"></i> Front ID</label>
                             <label class="id-upload-box" for="id_image_front">
                                 <div class="upload-placeholder" id="placeholder_front">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <span>Click to Upload</span>
+                                    <i class="fas fa-id-card" style="font-size: 3rem;"></i> <span>Click to Upload</span>
                                 </div>
                                 <img id="preview_front" class="id-preview-image">
                                 <input type="file" name="id_image_front" id="id_image_front" accept="image/*" onchange="previewImage(this, 'preview_front', 'placeholder_front')" required>
                             </label>
                         </div>
 
-                        <!-- Back ID -->
                         <div class="id-upload-col">
                             <label class="id-label-header"><i class="fas fa-id-card-alt"></i> Back ID</label>
                             <label class="id-upload-box" for="id_image_back">
                                 <div class="upload-placeholder" id="placeholder_back">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <span>Click to Upload</span>
+                                    <i class="fas fa-id-card" style="font-size: 3rem;"></i> <span>Click to Upload</span>
                                 </div>
                                 <img id="preview_back" class="id-preview-image">
-                                <input type="file" name="id_image_back" id="id_image_back" accept="image/*" onchange="previewImage(this, 'preview_back', 'placeholder_back')" required>
-                            </label>
-                        </div>
 
                     </div>
                 </div>
@@ -363,8 +376,20 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 document.getElementById(type + '_city_text').value = text;
                 
                 // Auto Auto-fill Zip
-                let zip = getZipCode(text);
-                document.getElementById(type + '_zip').value = zip;
+                const { fetchPostCodes } = usePostalPH;
+                fetchPostCodes({ municipality: text }).then(data => {
+                    const zipInput = document.getElementById(type + '_zip');
+                    if (data && data.length > 0) {
+                        // For simplicity, taking the first postal code.
+                        // A more advanced implementation might offer a selection if multiple exist.
+                        zipInput.value = data[0].post_code;
+                    } else {
+                        zipInput.value = ''; // Clear if no zip code found
+                    }
+                }).catch(error => {
+                    console.error('Error fetching postal codes:', error);
+                    document.getElementById(type + '_zip').value = ''; // Clear on error
+                });
             });
             document.getElementById(type + '_barangay').addEventListener('change', function() {
                 let text = this.options[this.selectedIndex].text;

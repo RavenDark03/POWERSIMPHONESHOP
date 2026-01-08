@@ -379,11 +379,11 @@ footer {
 .footer-contact {
     display: flex;
     justify-content: center;
-    gap: 30px;
+    gap: 40px; /* Increased gap for better spacing */
     margin-bottom: 20px;
-    align-items: center; /* Vertically align items */
-    width: fit-content; /* Make the flex container only as wide as its content */
-    margin: 0 auto 20px auto; /* Center the flex container itself */
+    align-items: center;
+    width: 100%; /* CHANGED: Forces the section to take full available width */
+    margin: 0 auto 20px auto;
 }
 
 .footer-contact p {
@@ -592,8 +592,8 @@ footer {
 }
 
 .id-upload-box {
-    width: 200px;
-    height: 90px;
+    width: 300px;
+    height: 100px;
     /* Further reduced height for wide landscape look */
     /* Reduced to look more landscape */
     border: 2px dashed #ccc;

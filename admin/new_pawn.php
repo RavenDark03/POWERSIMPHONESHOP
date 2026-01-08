@@ -148,6 +148,7 @@ $customers = $conn->query($sql);
                                 <input type="text" name="other_purity" id="other_purity" placeholder="Specify Purity" style="display:none; margin-top: 5px;">
                         </div>
                     </div>
+                </div>
 
                     <div class="form-row">
                         <div class="form-group" style="width: 100%;">
