@@ -1,0 +1,9 @@
+# Ignore user uploads (save space)
+uploads/
+
+# Ignore local editor settings
+.vscode/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
