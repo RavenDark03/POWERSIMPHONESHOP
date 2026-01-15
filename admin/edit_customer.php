@@ -47,6 +47,13 @@ if (!$row) {
         /* Ensure inputs/selects expand to column width to match Add Customer layout */
         .form-col input, .form-col select, .form-col textarea { width: 100%; box-sizing: border-box; }
         input[type="file"] { padding: 5px; }
+        .checkbox-container { margin: 10px 0; }
+        .checkbox-label { display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+        .checkbox-label input[type="checkbox"] { position:absolute; opacity:0; width:0; height:0; }
+        .checkbox-custom { width:18px; height:18px; border-radius:6px; border:2px solid #e6e6e6; background:#fff; display:inline-block; position:relative; box-sizing:border-box; }
+        .checkbox-label input[type="checkbox"]:checked + .checkbox-custom { background:#116530; border-color:#116530; }
+        .checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after { content:''; position:absolute; left:5px; top:2px; width:5px; height:10px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+        .checkbox-text { font-weight:700; text-transform:uppercase; color:#333; font-size:0.85rem; }
     </style>
 </head>
 <body>
@@ -59,7 +66,11 @@ if (!$row) {
             <nav>
                 <ul>
                     <li><a href="index.php">Dashboard</a></li>
-                    <li><a href="customers.php">Customers</a></li>
+                    <li><a href="customers.php" style="color: #d4af37;">Customers</a></li>
+                    <li><a href="pawning.php">Pawning</a></li>
+                    <li><a href="inventory.php">Inventory</a></li>
+                    <li><a href="reports.php">Reports</a></li>
+                    <li><a href="users.php">Users</a></li>
                     <li><a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
                 </ul>
             </nav>
@@ -67,8 +78,11 @@ if (!$row) {
     </header>
 
     <div class="container">
-        <h2>Edit Customer</h2>
         <form action="customer_process.php" method="post" enctype="multipart/form-data" class="admin-form">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
+                <h2 style="margin:0;">Edit Customer</h2>
+                <a href="customers.php" style="display:inline-block;padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#333;text-decoration:none;font-weight:600;">&larr; Back to Customers</a>
+            </div>
             <input type="hidden" name="action" value="edit">
             <input type="hidden" name="id" value="<?php echo $id; ?>">
             
@@ -90,12 +104,16 @@ if (!$row) {
                 </div>
                 <div class="form-row">
                     <div class="form-col">
-                        <label>Contact Number (e.g. +63 9xxxxxxxxx)</label>
+                        <label>Contact Number</label>
                         <input type="text" name="contact_number" value="<?php echo $row['contact_number']; ?>" required id="contact_number" maxlength="14">
                     </div>
                     <div class="form-col">
                         <label>Email</label>
                         <input type="email" name="email" value="<?php echo isset($row['email']) ? $row['email'] : ''; ?>" required>
+                    </div>
+                    <div class="form-col">
+                        <label>Username</label>
+                        <input type="text" name="username" value="<?php echo isset($row['username']) ? $row['username'] : ''; ?>">
                     </div>
                 </div>
             </div>
@@ -151,6 +169,23 @@ if (!$row) {
 
             <div class="form-section">
                 <h3>Permanent Address</h3>
+                <?php
+                    $same_address_checked = (
+                        trim($row['present_house_num']) === trim($row['permanent_house_num']) &&
+                        trim($row['present_street']) === trim($row['permanent_street']) &&
+                        trim($row['present_subdivision']) === trim($row['permanent_subdivision']) &&
+                        trim($row['present_city']) === trim($row['permanent_city']) &&
+                        trim($row['present_province']) === trim($row['permanent_province']) &&
+                        trim($row['present_zip']) === trim($row['permanent_zip'])
+                    ) ? 'checked' : '';
+                ?>
+                <div class="checkbox-container">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="same_address" <?php echo $same_address_checked; ?> onchange="copyAddress()">
+                        <span class="checkbox-custom" aria-hidden="true"></span>
+                        <span class="checkbox-text">Same as Present Address</span>
+                    </label>
+                </div>
                 <div class="form-row">
                     <div class="form-col">
                         <label>Unit/House No.</label>
@@ -246,7 +281,9 @@ if (!$row) {
                 ?>
             </div>
 
-            <button type="submit" class="btn btn-primary">Update Customer</button>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <button type="submit" class="btn btn-primary">Update Customer</button>
+            </div>
         </form>
     </div>
 </div>
@@ -277,6 +314,28 @@ if (!$row) {
             // Load and Pre-Select Data
             await loadAndSelect('present');
             await loadAndSelect('permanent');
+            // If the Same-as-Present checkbox is pre-checked on edit, copy values now
+            try {
+                const sameCb = document.getElementById('same_address');
+                if (sameCb && sameCb.checked) copyAddress();
+            } catch (e) { console.error('copyAddress on load failed', e); }
+
+            // Restrict zip inputs to digits only (max 4 chars)
+            function restrictZipInput(id) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0,4);
+                });
+                el.addEventListener('keydown', function(e) {
+                    if (e.ctrlKey || e.metaKey) return;
+                    const allowed = ['Backspace','Tab','ArrowLeft','ArrowRight','Delete','Home','End'];
+                    if (allowed.includes(e.key)) return;
+                    if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+                });
+            }
+            restrictZipInput('present_zip');
+            restrictZipInput('permanent_zip');
             
             // Contact Number Protection
             const contactInput = document.getElementById('contact_number');

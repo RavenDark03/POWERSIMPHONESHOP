@@ -15,6 +15,16 @@ error_reporting(E_ALL);
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $action = $_POST['action'] ?? 'add'; // Default to add if not set
 
+    // Ensure customers table has `username` column (best-effort)
+    try {
+        $colCheck = $conn->query("SHOW COLUMNS FROM customers LIKE 'username'");
+        if ($colCheck && $colCheck->num_rows == 0) {
+            $conn->query("ALTER TABLE customers ADD COLUMN username VARCHAR(191) DEFAULT '' AFTER email");
+        }
+    } catch (Exception $e) {
+        // ignore: if ALTER fails due to permissions, we'll surface uniqueness checks only
+    }
+
     if ($action == 'add') {
         // Generate Customer Code
         $year = date('Y');
@@ -51,8 +61,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Login fields for hybrid flow
         $email = trim($_POST['email'] ?? '');
-        // username defaults to email for walk-ins
-        $username = $email;
+        // allow explicit username; default to email for walk-ins
+        $username = trim($_POST['username'] ?? '');
+        if ($username === '') $username = $email;
+        $username = strtolower($username);
         // generate temporary password for walk-in
         function generateTempPassword($len = 8) {
             try {
@@ -93,6 +105,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $is_verified = (!empty($id_image_front_path) || !empty($id_image_back_path)) ? 1 : 0;
 
 
+
+        // Check username uniqueness for add
+        if ($username !== '') {
+            $checkSql = "SELECT id FROM customers WHERE username = ?";
+            $checkStmt = $conn->prepare($checkSql);
+            $checkStmt->bind_param("s", $username);
+            $checkStmt->execute();
+            $checkRes = $checkStmt->get_result();
+            if ($checkRes && $checkRes->num_rows > 0) {
+                echo "Error: Username already in use. Choose another username.";
+                exit();
+            }
+            $checkStmt->close();
+        }
 
         $sql = "INSERT INTO customers (
             customer_code, first_name, middle_name, last_name, contact_number,
@@ -135,6 +161,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $last_name = $_POST['last_name'];
         $contact_number = $_POST['contact_number'];
 
+        // username (editable)
+        $username = trim($_POST['username'] ?? '');
+        $username = strtolower($username);
+
         // Present Address
         $present_house_num = $_POST['present_house_num'];
         $present_street = $_POST['present_street'];
@@ -159,13 +189,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         // Handle File Upload
         $sql_updates = "";
+        // Validate uniqueness of username for edit (if provided)
+        if ($username !== '') {
+            $checkSql = "SELECT id FROM customers WHERE username = ? AND id != ?";
+            $checkStmt = $conn->prepare($checkSql);
+            $checkStmt->bind_param("si", $username, $id);
+            $checkStmt->execute();
+            $checkRes = $checkStmt->get_result();
+            if ($checkRes && $checkRes->num_rows > 0) {
+                echo "Error: Username already in use by another customer.";
+                exit();
+            }
+            $checkStmt->close();
+        }
+
         $params = [
-            $first_name, $middle_name, $last_name, $contact_number,
+            $first_name, $middle_name, $last_name, $contact_number, $username,
             $present_house_num, $present_street, $present_subdivision, $present_barangay, $present_city, $present_province, $present_zip,
             $permanent_house_num, $permanent_street, $permanent_subdivision, $permanent_barangay, $permanent_city, $permanent_province, $permanent_zip,
             $id_type, $other_id_type
         ];
-        $types = "ssssssssssssssssssss";
+        $types = "sssssssssssssssssssss";
 
         $code_sql = "SELECT customer_code FROM customers WHERE id = ?";
         $code_stmt = $conn->prepare($code_sql);
@@ -205,7 +249,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $types .= "i";
 
         $sql = "UPDATE customers SET 
-            first_name=?, middle_name=?, last_name=?, contact_number=?,
+            first_name=?, middle_name=?, last_name=?, contact_number=?, username=?,
             present_house_num=?, present_street=?, present_subdivision=?, present_barangay=?, present_city=?, present_province=?, present_zip=?,
             permanent_house_num=?, permanent_street=?, permanent_subdivision=?, permanent_barangay=?, permanent_city=?, permanent_province=?, permanent_zip=?,
             id_type=?, other_id_type=?" . $sql_updates . " WHERE id=?";

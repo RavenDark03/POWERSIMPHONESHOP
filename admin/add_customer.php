@@ -23,7 +23,13 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
         .form-col { flex: 1; }
         .form-col input, .form-col select { width: 100%; box-sizing: border-box; }
-        .checkbox-container { display: flex; align-items: center; gap: 5px; margin: 10px 0; }
+        .checkbox-container { margin: 10px 0; }
+        .checkbox-label { display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+        .checkbox-label input[type="checkbox"] { position:absolute; opacity:0; width:0; height:0; }
+        .checkbox-custom { width:18px; height:18px; border-radius:6px; border:2px solid #e6e6e6; background:#fff; display:inline-block; position:relative; box-sizing:border-box; }
+        .checkbox-label input[type="checkbox"]:checked + .checkbox-custom { background:#116530; border-color:#116530; }
+        .checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after { content:''; position:absolute; left:5px; top:2px; width:5px; height:10px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+        .checkbox-text { font-weight:700; text-transform:uppercase; color:#333; font-size:0.85rem; }
         input[type="file"] { padding: 5px; }
     </style>
 </head>
@@ -66,6 +72,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 <div class="form-row">
                     <div class="form-col"><label for="contact_number">Contact Number</label><input type="text" name="contact_number" id="contact_number" required placeholder="+63 9xxxxxxxxx" maxlength="14"></div>
                     <div class="form-col"><label for="email">Email Address</label><input type="email" name="email" id="email" required placeholder="customer@example.com"></div>
+                    <div class="form-col"><label for="username">Username</label><input type="text" name="username" id="username" placeholder="optional username"></div>
                 </div>
             </div>
 
@@ -102,7 +109,13 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 
             <div class="form-section">
                 <h3>Permanent Address</h3>
-                <div class="checkbox-container"><input type="checkbox" id="same_address" onchange="copyAddress()"><label for="same_address">Same as Present Address</label></div>
+                <div class="checkbox-container">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="same_address" onchange="copyAddress()">
+                        <span class="checkbox-custom" aria-hidden="true"></span>
+                        <span class="checkbox-text">Same as Present Address</span>
+                    </label>
+                </div>
                 <div class="form-row">
                     <div class="form-col"><label>Unit/House No.</label><input type="text" name="permanent_house_num" id="permanent_house_num" required></div>
                     <div class="form-col"><label>Street</label><input type="text" name="permanent_street" id="permanent_street" required></div>
@@ -235,6 +248,23 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 if (this.selectionStart < 4) this.setSelectionRange(4, 4);
             });
         });
+
+        // Restrict zip inputs to digits only (max 4 chars)
+        function restrictZipInput(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0,4);
+            });
+            el.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) return;
+                const allowed = ['Backspace','Tab','ArrowLeft','ArrowRight','Delete','Home','End'];
+                if (allowed.includes(e.key)) return;
+                if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+            });
+        }
+        restrictZipInput('present_zip');
+        restrictZipInput('permanent_zip');
 
         function previewImage(input, previewId, placeholderId) {
             if (input.files && input.files[0]) {

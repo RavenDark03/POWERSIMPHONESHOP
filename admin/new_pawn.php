@@ -22,6 +22,28 @@ $customers = $conn->query($sql);
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
+    <style>
+        /* Form normalization for consistent professional appearance */
+        .admin-form { background: #fff; padding: 22px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .admin-form h2 { margin-top: 0; margin-bottom: 14px; }
+        .form-section { margin-bottom: 22px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; }
+        .form-section h3 { color: #116530; font-size: 1.05rem; margin-bottom: 12px; }
+        .form-row { display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; }
+        .form-col, .form-group { flex:1; min-width:220px; }
+        .form-group.full, .form-group[style*="width: 100%"] { flex-basis:100%; width:100%; }
+        label { display:block; margin-bottom:8px; font-weight:600; font-size:0.85rem; color:#333; text-transform:uppercase; letter-spacing:0.4px; }
+        input[type="text"], input[type="number"], input[type="date"], select, textarea { width:100%; padding:10px 12px; border:1px solid #e6e6e6; border-radius:8px; font-size:1rem; box-sizing:border-box; font-family:inherit; }
+        textarea { min-height:72px; }
+        .checkbox-container label { font-weight:400; text-transform:none; }
+        .form-row .form-col .checkbox-container { margin-top:6px; }
+        /* Make loan amount visually prominent but sized consistently */
+        #loan_amount { padding:12px; }
+        /* Responsive tweaks */
+        @media (max-width:700px) {
+            .form-row { flex-direction:column; }
+            .form-col, .form-group { min-width:100%; }
+        }
+    </style>
 </head>
 <body>
     <header>
