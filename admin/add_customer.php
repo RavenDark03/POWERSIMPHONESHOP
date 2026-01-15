@@ -21,8 +21,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     <style>
         .form-section { margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
-        .form-col { flex: 1; min-width: 0; }
-        .form-col input, .form-col select, .form-group input, .form-group select { width: 100%; box-sizing: border-box !important; }
+        .form-col { flex: 1; }
+        .form-col input, .form-col select { width: 100%; box-sizing: border-box; }
         .checkbox-container { display: flex; align-items: center; gap: 5px; margin: 10px 0; }
         input[type="file"] { padding: 5px; }
     </style>
@@ -50,7 +50,10 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 
     <div class="container">
         <form action="customer_process.php" method="post" enctype="multipart/form-data" class="admin-form">
-            <h2>Add New Customer</h2>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <h2 style="margin:0;">Add New Customer</h2>
+                <a href="customers.php" style="display:inline-block;padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#333;text-decoration:none;font-weight:600;">&larr; Back to Customers</a>
+            </div>
             <input type="hidden" name="action" value="add">
             
             <div class="form-section">
@@ -61,7 +64,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                     <div class="form-col"><label>Last Name</label><input type="text" name="last_name" required></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label for="contact_number">Contact Number</label><input type="text" name="contact_number" id="contact_number" required placeholder="09xxxxxxxxx"></div>
+                    <div class="form-col"><label for="contact_number">Contact Number</label><input type="text" name="contact_number" id="contact_number" required placeholder="+63 9xxxxxxxxx" maxlength="14"></div>
+                    <div class="form-col"><label for="email">Email Address</label><input type="email" name="email" id="email" required placeholder="customer@example.com"></div>
                 </div>
             </div>
 
@@ -72,28 +76,28 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                     <div class="form-col"><label>Street</label><input type="text" name="present_street" id="present_street" required></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label for="present_subdivision">Subdivision/Village/Purok</label><input type="text" name="present_subdivision" id="present_subdivision" required></div>
+                    <div class="form-col"><label for="present_subdivision">Subdivision/Village/Purok</label><input type="text" name="present_subdivision" id="present_subdivision" required></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group">
+                    <div class="form-col">
                         <label for="present_province">Province</label>
                         <select name="present_province" id="present_province" required onchange="fetchCities('present')"><option value="">Select Province</option></select>
                         <input type="hidden" name="present_province_text" id="present_province_text">
                     </div>
-                    <div class="form-group">
+                    <div class="form-col">
                         <label for="present_city">City/Municipality</label>
                         <select name="present_city" id="present_city" required onchange="fetchBarangays('present')"><option value="">Select Province First</option></select>
                         <input type="hidden" name="present_city_text" id="present_city_text">
-                    </div> 
-                    <div class="form-group">
+                    </div>
+                    <div class="form-col">
                         <label for="present_barangay">Barangay</label>
                         <select name="present_barangay" id="present_barangay" required onchange="updateZip('present')"><option value="">Select City First</option></select>
                         <input type="hidden" name="present_barangay_text" id="present_barangay_text">
                     </div>
                 </div>
-                <div class="form-row">
-                     <div class="form-group"><label for="present_zip">Zip Code</label><input type="text" name="present_zip" id="present_zip" required></div>
-                </div>
+                 <div class="form-row">
+                     <div class="form-col"><label for="present_zip">Zip Code</label><input type="text" name="present_zip" id="present_zip" required></div>
+                 </div>
             </div>
 
             <div class="form-section">
@@ -104,27 +108,27 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                     <div class="form-col"><label>Street</label><input type="text" name="permanent_street" id="permanent_street" required></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label for="permanent_subdivision">Subdivision/Village/Purok</label><input type="text" name="permanent_subdivision" id="permanent_subdivision" required></div>
+                    <div class="form-col"><label for="permanent_subdivision">Subdivision/Village/Purok</label><input type="text" name="permanent_subdivision" id="permanent_subdivision" required></div>
                 </div>
                  <div class="form-row">
-                     <div class="form-group">
+                     <div class="form-col">
                         <label for="permanent_province">Province</label>
                         <select name="permanent_province" id="permanent_province" required onchange="fetchCities('permanent')"><option value="">Select Province</option></select>
                         <input type="hidden" name="permanent_province_text" id="permanent_province_text">
                     </div>
-                    <div class="form-group">
+                    <div class="form-col">
                         <label for="permanent_city">City/Municipality</label>
                         <select name="permanent_city" id="permanent_city" required onchange="fetchBarangays('permanent')"><option value="">Select Province First</option></select>
                         <input type="hidden" name="permanent_city_text" id="permanent_city_text">
-                    </div> 
-                    <div class="form-group">
+                    </div>
+                    <div class="form-col">
                         <label for="permanent_barangay">Barangay</label>
                         <select name="permanent_barangay" id="permanent_barangay" required onchange="updateZip('permanent')"><option value="">Select City First</option></select>
                         <input type="hidden" name="permanent_barangay_text" id="permanent_barangay_text">
                     </div>
                 </div>
                 <div class="form-row">
-                     <div class="form-group"><label for="permanent_zip">Zip Code</label><input type="text" name="permanent_zip" id="permanent_zip" required></div>
+                     <div class="form-col"><label for="permanent_zip">Zip Code</label><input type="text" name="permanent_zip" id="permanent_zip" required></div>
                 </div>
             </div>
 
@@ -164,37 +168,23 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                         <input type="text" name="other_id_type" id="other_id_type" placeholder="Please specify" style="display:none; margin-top: 5px;">
                     </div>
                 </div>
-                <div class="form-row"> <!-- This form-row encapsulates the id-upload-wrapper -->
-                    <!-- Professional ID Upload Section -->
-                    <div class="id-upload-wrapper" style="width: 100%;">
-                        
-                        <!-- Front ID -->
-                        <div class="id-upload-col">
-                            <label class="id-label-header"><i class="fas fa-id-card"></i> Front ID</label>
-                            <label class="id-upload-box" for="id_image_front">
-                                <div class="upload-placeholder" id="placeholder_front">
-                                    <i class="fas fa-id-card" style="font-size: 3rem;"></i> <span>Click to Upload</span>
-                                </div>
-                                <img id="preview_front" class="id-preview-image">
-                                <input type="file" name="id_image_front" id="id_image_front" accept="image/*" onchange="previewImage(this, 'preview_front', 'placeholder_front')" required>
-                            </label>
-                        </div>
-
-                        <div class="id-upload-col">
-                            <label class="id-label-header"><i class="fas fa-id-card-alt"></i> Back ID</label>
-                            <label class="id-upload-box" for="id_image_back">
-                                <div class="upload-placeholder" id="placeholder_back">
-                                    <i class="fas fa-id-card" style="font-size: 3rem;"></i> <span>Click to Upload</span>
-                                </div>
-                                <img id="preview_back" class="id-preview-image">
-                                <input type="file" name="id_image_back" id="id_image_back" accept="image/*" onchange="previewImage(this, 'preview_back', 'placeholder_back')" required>
-                            </label>
-                        </div>
-                    </div>
-                </div>
+                <?php
+                    // prepare include defaults for Add page (required files)
+                    $front_src = '';
+                    $show_front_preview = 'display:none;';
+                    $front_placeholder_opacity = '';
+                    $back_src = '';
+                    $show_back_preview = 'display:none;';
+                    $back_placeholder_opacity = '';
+                    $front_required = true;
+                    $back_required = true;
+                    include __DIR__ . '/_id_upload.php';
+                ?>
             </div>
 
-            <button type="submit" class="btn btn-primary">Add Customer</button>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <button type="submit" class="btn btn-primary">Add Customer</button>
+            </div>
         </form>
     </div>
 </div>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Powersim Phoneshop</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css?v=<?php echo time(); ?>">
+
 </head>
 <body>
     <header>
@@ -28,20 +29,18 @@
     <div class="container">
         <form action="login_process.php" method="post" class="login-form">
             <h2>Login</h2>
-            <?php
-            if (isset($_GET['error'])) {
-                if($_GET['error'] == 'pending') {
-                    echo '<div style="background-color: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #ffeeba; text-align: center;">Account is pending approval. Please wait for Admin.</div>';
-                } elseif ($_GET['error'] == 'rejected') {
-                    echo '<div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #f5c6cb; text-align: center;">Your account has been rejected. Contact support.</div>';
-                } else {
-                     echo '<div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #f5c6cb; text-align: center;">Invalid username or password.</div>';
-                }
-            }
-            ?>
+            <?php if (isset($_GET['error'])): ?>
+                <?php if ($_GET['error'] === 'pending'): ?>
+                    <div style="background-color:#fff3cd;color:#856404;padding:10px;border-radius:5px;margin-bottom:15px;border:1px solid #ffeeba;text-align:center;">Account is pending approval. Please wait for Admin.</div>
+                <?php elseif ($_GET['error'] === 'rejected'): ?>
+                    <div style="background-color:#f8d7da;color:#721c24;padding:10px;border-radius:5px;margin-bottom:15px;border:1px solid #f5c6cb;text-align:center;">Your account has been rejected. Contact support.</div>
+                <?php else: ?>
+                    <div style="background-color:#f8d7da;color:#721c24;padding:10px;border-radius:5px;margin-bottom:15px;border:1px solid #f5c6cb;text-align:center;">Invalid email or password.</div>
+                <?php endif; ?>
+            <?php endif; ?>
             <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" name="username" id="username" required>
+                <label for="identifier">Email or Username</label>
+                <input type="text" name="identifier" id="identifier">
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
@@ -71,13 +70,13 @@
         const togglePassword = document.querySelector('#togglePassword');
         const password = document.querySelector('#password');
 
-        togglePassword.addEventListener('click', function (e) {
-            // toggle the type attribute
-            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-            password.setAttribute('type', type);
-            // toggle the eye slash icon
-            this.classList.toggle('fa-eye-slash');
-        });
+        if (togglePassword && password) {
+            togglePassword.addEventListener('click', function (e) {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                this.classList.toggle('fa-eye-slash');
+            });
+        }
     </script>
 </body>
 </html>

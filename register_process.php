@@ -2,53 +2,128 @@
 include 'includes/connection.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $username = $_POST['username'];
-    $role = $_POST['role'];
-    $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
+    // Collect and validate inputs
+    $first_name = trim($_POST['first_name'] ?? '');
+    $last_name = trim($_POST['last_name'] ?? '');
+    $birthdate = trim($_POST['birthdate'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $confirm_email = trim($_POST['confirm_email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
+        $username = trim($_POST['username'] ?? '');
+
+    if (empty($first_name) || empty($last_name) || empty($email) || empty($password)) {
+        echo "<script>alert('Please fill required fields.'); window.history.back();</script>";
+        $conn->close();
+        exit();
+    }
+
+    if (strtolower($email) !== strtolower($confirm_email)) {
+        echo "<script>alert('Emails do not match.'); window.history.back();</script>";
+        $conn->close();
+        exit();
+    }
 
     if ($password !== $confirm_password) {
         echo "<script>alert('Passwords do not match.'); window.history.back();</script>";
         $conn->close();
         exit();
     }
+    
+        // validate username
+        if (empty($username) || !preg_match('/^[A-Za-z0-9._-]{3,20}$/', $username)) {
+            echo "<script>alert('Invalid username. Use 3-20 characters: letters, numbers, dot, underscore or dash.'); window.history.back();</script>";
+            $conn->close();
+            exit();
+        }
 
-    // Validate role
-    $allowed_roles = ['staff', 'manager', 'admin'];
-    if (!in_array($role, $allowed_roles)) {
-        echo "<script>alert('Invalid role selected.'); window.history.back();</script>";
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo "<script>alert('Invalid email address.'); window.history.back();</script>";
         $conn->close();
         exit();
     }
 
+    // Hash password
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    // Default status is pending
-    $status = 'pending';
+    // Pre-insert uniqueness check for email (friendly error)
+    $chk = $conn->prepare('SELECT id FROM customers WHERE email = ? LIMIT 1');
+    if ($chk) {
+        $chk->bind_param('s', $email);
+        $chk->execute();
+        $chk->store_result();
+        if ($chk->num_rows > 0) {
+            echo "<script>alert('This email is already registered. Please login or use another email.'); window.history.back();</script>";
+            $chk->close();
+            $conn->close();
+            exit();
+        }
+        $chk->close();
+    }
+    
+        // check uniqueness against users table
+        $chk = $conn->prepare('SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1');
+        $chk->bind_param('ss', $username, $email);
+        $chk->execute();
+        $chk->store_result();
+        if ($chk->num_rows > 0) {
+            echo "<script>alert('Username or email already in use by staff account.'); window.history.back();</script>";
+            $chk->close();
+            $conn->close();
+            exit();
+        }
+        $chk->close();
+    
+        // ensure username/email uniqueness in customers
+        $stmt = $conn->prepare('SELECT id FROM customers WHERE username = ? OR email = ? LIMIT 1');
+        $stmt->bind_param('ss', $username, $email);
+        $stmt->execute();
+        $stmt->store_result();
+        if ($stmt->num_rows > 0) {
+            echo "<script>alert('Username or email already registered.'); window.history.back();</script>";
+            $stmt->close();
+            $conn->close();
+            exit();
+        }
+        $stmt->close();
 
-    $sql = "INSERT INTO users (name, email, username, password, role, status) VALUES (?, ?, ?, ?, ?, ?)";
+    // Generate customer code
+    $customer_code = 'CUST' . time() . rand(100,999);
 
+    // For online registrations
+    $registration_source = 'online';
+    $is_verified = 0; // online users must complete KYC / verify email
+    $username = $email; // default username equals email
+
+    // Create verification token and expiry
+    try {
+        $verification_token = bin2hex(random_bytes(16));
+    } catch (Exception $e) {
+        $verification_token = bin2hex(openssl_random_pseudo_bytes(16));
+    }
+    $verification_expires = date('Y-m-d H:i:s', strtotime('+2 days'));
+
+    $sql = "INSERT INTO customers (customer_code, first_name, last_name, birthdate, email, username, password, registration_source, is_verified, verification_token, verification_expires) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     if ($stmt) {
-        $stmt->bind_param("ssssss", $name, $email, $username, $hashed_password, $role, $status);
-
+        $stmt->bind_param('ssssssssiss', $customer_code, $first_name, $last_name, $birthdate, $email, $username, $hashed_password, $registration_source, $is_verified, $verification_token, $verification_expires);
         if ($stmt->execute()) {
-            // Send Email to Admin
-            require_once 'includes/send_email.php';
-            $admin_email = "matthewmarcsantua@gmail.com"; 
-            $subject = "New User Registration";
-            $message = "A new user has registered.\n\nName: $name\nEmail: $email\nRole: $role\n\nPlease login to approve or reject this request.";
-            
-            sendEmail($admin_email, $subject, $message);
+            // send verification email to customer
+            if (file_exists(__DIR__ . '/includes/send_email.php')) {
+                require_once __DIR__ . '/includes/send_email.php';
+                $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                $base = $scheme . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']);
+                $verify_url = rtrim($base, '/') . '/verify.php?token=' . $verification_token;
+                $subject = 'Please verify your email address';
+                $message = "Hello $first_name $last_name,\n\nThank you for registering. Please confirm your email address by clicking the link below:\n\n$verify_url\n\nThis link will expire in 48 hours.\n\nIf you did not register, please ignore this email.";
+                @sendEmail($email, $subject, $message);
+            }
 
-            echo "<script>alert('Registration successful! Please wait for Admin approval.'); window.location.href='login.php';</script>";
+            echo "<script>alert('Registration successful! Please check your email to verify your account.'); window.location.href='login.php';</script>";
         } else {
             error_log('Execution failed: ' . $stmt->error);
-            // Check for duplicate entry
             if ($conn->errno === 1062) {
-                echo "<script>alert('Registration failed. The username or email is already taken.'); window.history.back();</script>";
+                echo "<script>alert('Registration failed. The email is already registered.'); window.history.back();</script>";
             } else {
                 echo "<script>alert('An error occurred during registration. Please try again.'); window.history.back();</script>";
             }
@@ -61,7 +136,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $conn->close();
 } else {
-    // Redirect if not a POST request
     header('Location: register.php');
     exit();
 }

@@ -1,4 +1,97 @@
-const PH_ZIP_CODES = {
+// Province-ordered skeleton mapping (Abra -> Zamboanga Sibugay).
+// Populate each province object with city/municipality => zip when available.
+const PROVINCE_ZIP = {
+    "Abra": {
+        'BANGUED': '2800', 'BOLINEY': '2815', 'BUCAY': '2805', 'BUCLOC': '2817', 'DAGUIOMAN': '2816',
+        'DANGLAS': '2825', 'DOLORES': '2801', 'LA PAZ': '2826', 'LACUB': '2821', 'LAGANGILANG': '2802',
+        'LAGAYAN': '2824', 'LANGIDEN': '2807', 'LICUAN (BAAY)': '2819', 'LUBA': '2813', 'MALIBCONG': '2820',
+        'MANABO': '2810', 'PEÑARRUBIA': '2804', 'PIDIGAN': '2806', 'PILAR': '2812', 'SALLAPADAN': '2818',
+        'SAN ISIDRO': '2809', 'SAN JUAN': '2823', 'SAN QUINTIN': '2808', 'TAYUM': '2803', 'TINEG': '2822',
+        'TUBO': '2814', 'VILLAVICIOSA': '2811'
+    },
+    "Agusan del Norte": {},
+    "Agusan del Sur": {},
+    "Aklan": {},
+    "Albay": {},
+    "Antique": {},
+    "Apayao": {},
+    "Aurora": {},
+    "Basilan": {},
+    "Bataan": {},
+    "Batanes": {},
+    "Batangas": {},
+    "Benguet": {},
+    "Biliran": {},
+    "Bohol": {},
+    "Bukidnon": {},
+    "Bulacan": {},
+    "Cagayan": {},
+    "Camarines Norte": {},
+    "Camarines Sur": {},
+    "Camiguin": {},
+    "Capiz": {},
+    "Catanduanes": {},
+    "Cavite": {},
+    "Cebu": {},
+    "Cotabato": {},
+    "Davao de Oro": {},
+    "Davao del Norte": {},
+    "Davao del Sur": {},
+    "Davao Occidental": {},
+    "Davao Oriental": {},
+    "Dinagat Islands": {},
+    "Eastern Samar": {},
+    "Guimaras": {},
+    "Ifugao": {},
+    "Ilocos Norte": {},
+    "Ilocos Sur": {},
+    "Iloilo": {},
+    "Isabela": {},
+    "Kalinga": {},
+    "La Union": {},
+    "Laguna": {},
+    "Lanao del Norte": {},
+    "Lanao del Sur": {},
+    "Leyte": {},
+    "Maguindanao": {},
+    "Marinduque": {},
+    "Masbate": {},
+    "Misamis Occidental": {},
+    "Misamis Oriental": {},
+    "Mountain Province": {},
+    "Negros Occidental": {},
+    "Negros Oriental": {},
+    "Northern Samar": {},
+    "Nueva Ecija": {},
+    "Nueva Vizcaya": {},
+    "Occidental Mindoro": {},
+    "Oriental Mindoro": {},
+    "Palawan": {},
+    "Pampanga": {},
+    "Pangasinan": {},
+    "Quezon": {},
+    "Quirino": {},
+    "Rizal": {},
+    "Romblon": {},
+    "Sarangani": {},
+    "Siquijor": {},
+    "Sorsogon": {},
+    "South Cotabato": {},
+    "Southern Leyte": {},
+    "Sultan Kudarat": {},
+    "Sulu": {},
+    "Surigao del Norte": {},
+    "Surigao del Sur": {},
+    "Tarlac": {},
+    "Tawi-Tawi": {},
+    "Zambales": {},
+    "Zamboanga del Norte": {},
+    "Zamboanga del Sur": {},
+    "Zamboanga Sibugay": {}
+};
+
+// Flat legacy mapping retained as fallback.
+const PH_ZIP_FLAT = {
     'BANGUED': '2800', 'BOLINEY': '2815', 'BUCAY': '2805', 'BUCLOC': '2817', 'DAGUIOMAN': '2816', 
     'DANGLAS': '2825', 'DOLORES': '2801', 'LA PAZ': '2826', 'LACUB': '2821', 'LAGANGILANG': '2802', 
     'LAGAYAN': '2824', 'LANGIDEN': '2807', 'LICUAN (BAAY)': '2819', 'LUBA': '2813', 'MALIBCONG': '2820', 
@@ -397,7 +490,7 @@ const PH_ZIP_CODES = {
     'PASIG ORTIGAS CTR-PO BOX# 2600 TO 2699': '1666', 'PASIG ORTIGAS CTR-PO BOX# 2700 TO 2799': '1667', 
     'PASIG ORTIGAS CTR-PO BOX# 2800 TO 2899': '1668', 'PASIG ORTIGAS CTR-PO BOX# 2900 TO 2999': '1669', 
     'PASIG ORTIGAS CTR-PO BOX# 3000 TO 3099': '1670', 'PASIG ORTIGAS CTR-PO BOX# 3100 TO 3199': '1671', 
-    'PASIG ORTIGAS CTR-PO BOX# 3200 TO 3299': '1672', 'PASIG ORTIGAS CTR-PO BOX# 3300 TO 3399': '1673', 
+    'PASIG ORTIGAS CTR-PO BOX# 3200 TO 3299': '1672', 'PASIG ORTIGAS CTR-PO BOX# 3300 TO 3399': '1673',
     'PASIG ORTIGAS CTR-PO BOX# 3400 TO 3499': '1674', 'PASIG ORTIGAS CTR-PO BOX# 3500 TO 3599': '1675', 
     'PASIG ORTIGAS CTR-PO BOX# 3600 TO 3699': '1676', 'PASIG ORTIGAS CTR-PO BOX# 3700 TO 3799': '1677', 
     'PASIG ORTIGAS CTR-PO BOX# 3800 TO 3899': '1678', 'PASIG ORTIGAS CTR-PO BOX# 3900 TO 3999': '1679', 
@@ -421,19 +514,129 @@ const PH_ZIP_CODES = {
     'BROADWAY CENTER P.O. BOXES': '1141', 'BUNGAD': '1105', 'BUREAU OF INTERNAL REVENUE': '820',
 };
 
+// Keep `PH_ZIP_CODES` alias for backward compatibility with existing lookups
+const PH_ZIP_CODES = PH_ZIP_FLAT;
+
 function getZipCode(cityName) {
     if (!cityName) return '';
     const cleanName = cityName.toUpperCase().trim();
+    // 1) Try province-grouped map (exact match)
+    for (const prov of Object.keys(PROVINCE_ZIP)) {
+        const map = PROVINCE_ZIP[prov];
+        if (map && map[cleanName]) return map[cleanName];
+    }
 
-    // Direct Match
+    // 2) Try province-grouped partial match
+    for (const prov of Object.keys(PROVINCE_ZIP)) {
+        const map = PROVINCE_ZIP[prov];
+        if (!map) continue;
+        for (const key in map) {
+            if (cleanName.includes(key)) return map[key];
+        }
+    }
+
+    // 3) Fallback to flat map exact match
     if (PH_ZIP_CODES[cleanName]) return PH_ZIP_CODES[cleanName];
 
-    // Partial Match (e.g. "CITY OF MALOLOS" -> "MALOLOS")
-    // iterate keys
+    // 4) Fallback to flat map partial match
     for (let key in PH_ZIP_CODES) {
         if (cleanName.includes(key)) {
             return PH_ZIP_CODES[key];
         }
     }
+
     return '';
+}
+
+// Best-effort auto-grouping: convert flat map entries into `PROVINCE_ZIP` using PSGC API.
+async function autoGroupFlatMap(apiBase = 'https://psgc.gitlab.io/api') {
+    if (window.ZIP_AUTO_GROUPED) return { grouped: 0, unmatched: 0 };
+
+    const norm = s => s ? s.toString().toUpperCase().replace(/[^A-Z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim() : '';
+
+    try {
+        const provincesResp = await fetch(`${apiBase}/provinces/`);
+        if (!provincesResp.ok) throw new Error('Failed to fetch provinces');
+        const provinces = await provincesResp.json();
+
+        // build city -> province map
+        const cityToProvince = {}; // normCity => provinceName
+
+        for (const prov of provinces) {
+            const provName = prov.name || prov.province || prov; // defensive
+            try {
+                const citiesResp = await fetch(`${apiBase}/provinces/${prov.code}/cities-municipalities/`);
+                if (!citiesResp.ok) continue;
+                const cities = await citiesResp.json();
+                for (const c of cities) {
+                    const cn = norm(c.name || c);
+                    if (cn) cityToProvince[cn] = provName;
+                }
+            } catch (e) {
+                // ignore per-province errors
+                continue;
+            }
+        }
+
+        let grouped = 0, unmatched = 0;
+
+        // Attempt exact match first
+        for (const rawKey of Object.keys(PH_ZIP_FLAT)) {
+            const z = PH_ZIP_FLAT[rawKey];
+            const nk = norm(rawKey);
+            if (!nk) { unmatched++; continue; }
+
+            if (cityToProvince[nk]) {
+                const provName = cityToProvince[nk];
+                if (!PROVINCE_ZIP[provName]) PROVINCE_ZIP[provName] = {};
+                PROVINCE_ZIP[provName][nk] = z;
+                grouped++;
+                continue;
+            }
+
+            // try partial match: check if any known city name is contained in nk
+            let matched = false;
+            for (const cityNorm in cityToProvince) {
+                if (nk.includes(cityNorm) || cityNorm.includes(nk)) {
+                    const provName = cityToProvince[cityNorm];
+                    if (!PROVINCE_ZIP[provName]) PROVINCE_ZIP[provName] = {};
+                    PROVINCE_ZIP[provName][nk] = z;
+                    grouped++; matched = true; break;
+                }
+            }
+            if (!matched) unmatched++;
+        }
+
+        window.ZIP_AUTO_GROUPED = true;
+        window.ZIP_GROUP_STATS = { grouped, unmatched };
+        return { grouped, unmatched };
+    } catch (e) {
+        console.error('autoGroupFlatMap failed', e);
+        return { grouped: 0, unmatched: Object.keys(PH_ZIP_FLAT).length };
+    }
+}
+
+// Run auto-grouping in background if fetch is available
+if (typeof fetch === 'function') {
+    autoGroupFlatMap().then(stats => {
+        console.info('zipcodes: autoGroupFlatMap completed', stats);
+        try {
+            // Log a compact JSON and trigger a download so you can copy/paste the grouped mapping for commit
+            const json = JSON.stringify(PROVINCE_ZIP, null, 2);
+            console.info('zipcodes: grouped mapping (also starting download)');
+            console.log(json);
+            // Trigger automatic download in the browser
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'province_zip_grouped.json';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error('zipcodes: export failed', e);
+        }
+    }).catch(() => {});
 }

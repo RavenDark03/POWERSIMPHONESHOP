@@ -48,6 +48,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // ID Info
         $id_type = $_POST['id_type'];
         $other_id_type = ($id_type == 'Others') ? $_POST['other_id_type'] : NULL;
+
+        // Login fields for hybrid flow
+        $email = trim($_POST['email'] ?? '');
+        // username defaults to email for walk-ins
+        $username = $email;
+        // generate temporary password for walk-in
+        function generateTempPassword($len = 8) {
+            try {
+                return substr(bin2hex(random_bytes(4)), 0, $len);
+            } catch (Exception $e) {
+                return substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, $len);
+            }
+        }
+        $temp_password = generateTempPassword(8);
+        $hashed_password = password_hash($temp_password, PASSWORD_DEFAULT);
+        $registration_source = 'walk_in';
         
         // Handle File Upload
         $id_image_front_path = "";
@@ -73,23 +89,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $id_image_front_path = uploadID('id_image_front', $customer_code, 'FRONT', $target_dir);
         $id_image_back_path = uploadID('id_image_back', $customer_code, 'BACK', $target_dir);
 
+        // determine verification: if IDs uploaded mark verified
+        $is_verified = (!empty($id_image_front_path) || !empty($id_image_back_path)) ? 1 : 0;
+
+
 
         $sql = "INSERT INTO customers (
             customer_code, first_name, middle_name, last_name, contact_number,
             present_house_num, present_street, present_subdivision, present_barangay, present_city, present_province, present_zip,
             permanent_house_num, permanent_street, permanent_subdivision, permanent_barangay, permanent_city, permanent_province, permanent_zip,
-            id_type, other_id_type, id_image_front_path, id_image_back_path
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            id_type, other_id_type, id_image_front_path, id_image_back_path,
+            email, username, password, registration_source, is_verified
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssssssssssssssssssssss", 
+        $stmt->bind_param("ssssssssssssssssssssssssssi", 
             $customer_code, $first_name, $middle_name, $last_name, $contact_number,
             $present_house_num, $present_street, $present_subdivision, $present_barangay, $present_city, $present_province, $present_zip,
             $permanent_house_num, $permanent_street, $permanent_subdivision, $permanent_barangay, $permanent_city, $permanent_province, $permanent_zip,
-            $id_type, $other_id_type, $id_image_front_path, $id_image_back_path
+            $id_type, $other_id_type, $id_image_front_path, $id_image_back_path,
+            $email, $username, $hashed_password, $registration_source, $is_verified
         );
 
         if ($stmt->execute()) {
+            // send credentials email to customer for walk-in
+            if (!empty($email) && file_exists('../includes/send_email.php')) {
+                require_once '../includes/send_email.php';
+                $subject = "Your account credentials - Powersim";
+                $message = "Hello $first_name $last_name,\n\nA customer account has been created for you.\nUsername: $username\nTemporary Password: $temp_password\n\nPlease login and change your password.\n\nRegards,\nPowersim";
+                @sendEmail($email, $subject, $message);
+            }
+
             header("Location: customers.php");
             exit();
         } else {
@@ -159,6 +189,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $sql_updates .= ", $columnName = ?";
                     $params[] = $path;
                     $types .= "s";
+                    // mark as verified when an ID image is uploaded (only add once)
+                    if (strpos($sql_updates, 'is_verified') === false) {
+                        $sql_updates .= ", is_verified = 1";
+                    }
                 }
              }
         }

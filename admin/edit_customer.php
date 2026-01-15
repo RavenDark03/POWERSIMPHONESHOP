@@ -38,12 +38,14 @@ if (!$row) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
     <script src="https://cdn.jsdelivr.net/npm/use-postal-ph@1.0.1/dist/index.js"></script>
+    <script src="../js/zipcodes.js"></script>
     <style>
         .form-section { margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
         /* .form-section h3 removed to use style.css */
-        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
-        .form-col { flex: 1; }
-        /* Input styles removed to use style.css */
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .form-col { flex: 1; min-width: 0; }
+        /* Ensure inputs/selects expand to column width to match Add Customer layout */
+        .form-col input, .form-col select, .form-col textarea { width: 100%; box-sizing: border-box; }
         input[type="file"] { padding: 5px; }
     </style>
 </head>
@@ -90,6 +92,10 @@ if (!$row) {
                     <div class="form-col">
                         <label>Contact Number (e.g. +63 9xxxxxxxxx)</label>
                         <input type="text" name="contact_number" value="<?php echo $row['contact_number']; ?>" required id="contact_number" maxlength="14">
+                    </div>
+                    <div class="form-col">
+                        <label>Email</label>
+                        <input type="email" name="email" value="<?php echo isset($row['email']) ? $row['email'] : ''; ?>" required>
                     </div>
                 </div>
             </div>
@@ -198,7 +204,7 @@ if (!$row) {
                     <div class="form-col">
                         <label>ID Type</label>
                         <select name="id_type" id="id_type" required onchange="toggleOtherID()">
-                            <option value="">Select ID Type (BSP Accepted)</option>
+                            <option value="">Select ID Type </option>
                             <?php
                             $bsp_ids_grouped = [
                                 "Primary / Major IDs" => [
@@ -229,69 +235,21 @@ if (!$row) {
                         </select>
                         <input type="text" name="other_id_type" id="other_id_type" value="<?php echo isset($row['other_id_type']) ? $row['other_id_type'] : ''; ?>" placeholder="Please specify" style="display:none; margin-top: 5px;">
                     </div>
-                <div class="form-row">
-                     <!-- ID Upload Section Wrapper -->
-                    <div class="id-upload-wrapper" style="width: 100%;">
-                        
-                        <!-- Front ID -->
-                        <div class="id-upload-col">
-                            <?php 
-                                $front_src = "";
-                                $show_front_preview = "display:none;";
-                                $front_placeholder_opacity = "";
-                                
-                                if (!empty($row['id_image_front_path'])) {
-                                    $front_src = "../" . $row['id_image_front_path'];
-                                    $show_front_preview = "display:block;";
-                                    $front_placeholder_opacity = "opacity:0;";
-                                } elseif (!empty($row['id_image_path'])) { // Fallback legacy
-                                    $front_src = "../" . $row['id_image_path'];
-                                    $show_front_preview = "display:block;";
-                                    $front_placeholder_opacity = "opacity:0;";
-                                }
-                            ?>
-                            <label class="id-label-header"><i class="fas fa-id-card"></i> Update Front ID</label>
-                            <label class="id-upload-box" for="id_image_front">
-                                <div class="upload-placeholder" id="placeholder_front" style="<?php echo $front_placeholder_opacity; ?>">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <span>Click to Change</span>
-                                </div>
-                                <img id="preview_front" class="id-preview-image" src="<?php echo $front_src; ?>" style="<?php echo $show_front_preview; ?>">
-                                <input type="file" name="id_image_front" id="id_image_front" accept="image/*" onchange="previewImage(this, 'preview_front', 'placeholder_front')">
-                            </label>
-                        </div>
-
-                        <!-- Back ID -->
-                        <div class="id-upload-col">
-                            <?php 
-                                $back_src = "";
-                                $show_back_preview = "display:none;";
-                                $back_placeholder_opacity = "";
-                                
-                                if (!empty($row['id_image_back_path'])) {
-                                    $back_src = "../" . $row['id_image_back_path'];
-                                    $show_back_preview = "display:block;";
-                                    $back_placeholder_opacity = "opacity:0;";
-                                }
-                            ?>
-                            <label class="id-label-header"><i class="fas fa-id-card-alt"></i> Update Back ID</label>
-                             <label class="id-upload-box" for="id_image_back">
-                                <div class="upload-placeholder" id="placeholder_back" style="<?php echo $back_placeholder_opacity; ?>">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <span>Click to Change</span>
-                                </div>
-                                <img id="preview_back" class="id-preview-image" src="<?php echo $back_src; ?>" style="<?php echo $show_back_preview; ?>">
-                                <input type="file" name="id_image_back" id="id_image_back" accept="image/*" onchange="previewImage(this, 'preview_back', 'placeholder_back')">
-                            </label>
-                        </div>
-
-                    </div>
                 </div>
+                <?php
+                    // variables already computed above in this file: $front_src, $show_front_preview, $front_placeholder_opacity, $back_src, $show_back_preview, $back_placeholder_opacity
+                    // ensure paths are set as expected (they are already set earlier)
+                    $front_label = 'Front ID';
+                    $back_label = 'Back ID';
+                    // do not set required on edit
+                    include __DIR__ . '/_id_upload.php';
+                ?>
             </div>
 
             <button type="submit" class="btn btn-primary">Update Customer</button>
         </form>
     </div>
+</div>
 
     <footer>
         <div class="container">
@@ -395,22 +353,12 @@ if (!$row) {
             document.getElementById(type + '_city').addEventListener('change', function() {
                 let text = this.options[this.selectedIndex].text;
                 document.getElementById(type + '_city_text').value = text;
-                
-                // Auto Auto-fill Zip
-                const { fetchPostCodes } = usePostalPH;
-                fetchPostCodes({ municipality: text }).then(data => {
-                    const zipInput = document.getElementById(type + '_zip');
-                    if (data && data.length > 0) {
-                        // For simplicity, taking the first postal code.
-                        // A more advanced implementation might offer a selection if multiple exist.
-                        zipInput.value = data[0].post_code;
-                    } else {
-                        zipInput.value = ''; // Clear if no zip code found
-                    }
-                }).catch(error => {
-                    console.error('Error fetching postal codes:', error);
-                    document.getElementById(type + '_zip').value = ''; // Clear on error
-                });
+                // Auto-fill Zip using local zipcodes.js first, fallback to remote API
+                try {
+                    updateZip(type);
+                } catch (err) {
+                    console.error('updateZip error on change', err);
+                }
             });
             document.getElementById(type + '_barangay').addEventListener('change', function() {
                 let text = this.options[this.selectedIndex].text;
@@ -451,7 +399,18 @@ if (!$row) {
             const select = document.getElementById(type + '_city');
             const savedCity = document.getElementById(type + '_city_text').value;
 
-            if(!provinceCode) return;
+            // keep human-readable province text in sync
+            const provSelect = document.getElementById(type + '_province');
+            if (provSelect && provSelect.selectedIndex >= 0) {
+                document.getElementById(type + '_province_text').value = provSelect.options[provSelect.selectedIndex].text;
+            }
+
+            if(!provinceCode) {
+                select.innerHTML = '<option value="">Select Province First</option>';
+                const brgy = document.getElementById(type + '_barangay');
+                if (brgy) brgy.innerHTML = '<option value="">Select City First</option>';
+                return;
+            }
 
             select.innerHTML = '<option value="">Loading...</option>';
             
@@ -479,6 +438,7 @@ if (!$row) {
 
             } catch (e) {
                 console.error('Error loading cities', e);
+                select.innerHTML = '<option value="">Error loading cities</option>';
             }
         }
 
@@ -487,25 +447,115 @@ if (!$row) {
             const select = document.getElementById(type + '_barangay');
             const savedBrgy = document.getElementById(type + '_barangay_text').value;
 
-            if(!cityCode) return;
-            
+            // keep human-readable city text in sync
+            const citySelect = document.getElementById(type + '_city');
+            if (citySelect && citySelect.selectedIndex >= 0) {
+                document.getElementById(type + '_city_text').value = citySelect.options[citySelect.selectedIndex].text;
+            }
+
+            if(!cityCode) {
+                select.innerHTML = '<option value="">Select City First</option>';
+                return;
+            }
+
             select.innerHTML = '<option value="">Loading...</option>';
+
+            // add a timeout wrapper for fetch to avoid stuck "Loading..."
+            const fetchWithTimeout = (url, options = {}, timeout = 8000) => {
+                return Promise.race([
+                    fetch(url, options),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout))
+                ]);
+            };
+
             try {
-                const response = await fetch(`${API_BASE}/cities-municipalities/${cityCode}/barangays/`);
+                const response = await fetchWithTimeout(`${API_BASE}/cities-municipalities/${encodeURIComponent(cityCode)}/barangays/`);
+                if (!response.ok) throw new Error('Network response not ok');
                 const data = await response.json();
+                if (!Array.isArray(data) || data.length === 0) {
+                    select.innerHTML = '<option value="">No barangays found</option>';
+                    return;
+                }
                 data.sort((a, b) => a.name.localeCompare(b.name));
-                
+
                 let options = '<option value="">Select Barangay</option>';
+                let foundSelected = false;
                 data.forEach(b => {
                     let isSelected = false;
-                    if(isPreload && b.name.toUpperCase() === savedBrgy.toUpperCase()) {
+                    if(isPreload && savedBrgy && b.name.toUpperCase() === savedBrgy.toUpperCase()) {
                         isSelected = true;
+                        foundSelected = true;
                     }
                     options += `<option value="${b.code}" ${isSelected ? 'selected' : ''}>${b.name}</option>`;
                 });
                 select.innerHTML = options;
+
+                // If preloading and we found a selected barangay, leave zip update to caller; otherwise update zip now
+                if(!isPreload || !foundSelected) updateZip(type);
             } catch (e) {
                 console.error('Error loading barangays', e);
+                // If we timed out, attempt one retry without the timeout wrapper (longer wait)
+                if (e && e.message && e.message.toLowerCase().includes('timeout')) {
+                    try {
+                        const retryResp = await fetch(`${API_BASE}/cities-municipalities/${encodeURIComponent(cityCode)}/barangays/`);
+                        if (retryResp.ok) {
+                            const retryData = await retryResp.json();
+                            if (Array.isArray(retryData) && retryData.length > 0) {
+                                retryData.sort((a, b) => a.name.localeCompare(b.name));
+                                let options = '<option value="">Select Barangay</option>';
+                                retryData.forEach(b => {
+                                    options += `<option value="${b.code}">${b.name}</option>`;
+                                });
+                                select.innerHTML = options;
+                                updateZip(type);
+                                return;
+                            } else {
+                                select.innerHTML = '<option value="">No barangays found</option>';
+                                return;
+                            }
+                        }
+                    } catch (retryErr) {
+                        console.error('Retry loading barangays failed', retryErr);
+                    }
+                }
+                select.innerHTML = '<option value="">Error loading barangays</option>';
+            }
+        }
+
+        // Auto-fill zip code using local zipcodes.js first, then usePostalPH as fallback
+        async function updateZip(type) {
+            try {
+                const citySelect = document.getElementById(type + '_city');
+                const zipInput = document.getElementById(type + '_zip');
+                if (!citySelect || !zipInput) return;
+
+                const cityName = citySelect.options[citySelect.selectedIndex] ? citySelect.options[citySelect.selectedIndex].text : '';
+                if (!cityName) { zipInput.value = ''; return; }
+
+                // Prefer local lookup
+                if (typeof getZipCode === 'function') {
+                    const z = getZipCode(cityName);
+                    if (z) { zipInput.value = z; return; }
+                }
+
+                // Fallback: use usePostalPH if available
+                if (window.usePostalPH && usePostalPH.fetchPostCodes) {
+                    try {
+                        const { fetchPostCodes } = usePostalPH;
+                        const data = await fetchPostCodes({ municipality: cityName });
+                        if (data && data.length > 0) {
+                            zipInput.value = data[0].post_code || '';
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('usePostalPH fetch failed', e);
+                    }
+                }
+
+                // final fallback: clear
+                zipInput.value = '';
+            } catch (e) {
+                console.error('updateZip error', e);
             }
         }
 
