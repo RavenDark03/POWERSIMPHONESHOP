@@ -66,10 +66,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $item_id = $stmt->insert_id;
             $sql = "INSERT INTO transactions (item_id, transaction_type) VALUES (?, 'pawn')";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $item_id);
-            $stmt->execute();
-
-            header("Location: pawning.php");
+            header("Location: receipt.php?item_id=" . $item_id);
             exit();
         } else {
             echo "Error: " . $sql . "<br>" . $conn->error;
