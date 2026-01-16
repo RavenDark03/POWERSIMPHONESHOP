@@ -56,27 +56,14 @@ if (!$row) {
         .checkbox-text { font-weight:700; text-transform:uppercase; color:#333; font-size:0.85rem; }
     </style>
 </head>
-<body>
+<body class="has-sidebar">
+    <?php include '../includes/sidebar_nav.php'; ?>
+
     <header>
-        <div class="container">
-            <a href="index.php" class="logo-container">
-                <img src="../images/powersim logo.png" alt="Powersim Phoneshop" class="logo-img">
-                <span class="logo-text">Powersim Phoneshop</span>
-            </a>
-            <nav>
-                <ul>
-                    <li><a href="index.php">Dashboard</a></li>
-                    <li><a href="customers.php" style="color: #d4af37;">Customers</a></li>
-                    <li><a href="pawning.php">Pawning</a></li>
-                    <li><a href="inventory.php">Inventory</a></li>
-                    <li><a href="reports.php">Reports</a></li>
-                    <li><a href="users.php">Users</a></li>
-                    <li><a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
-                </ul>
-            </nav>
-        </div>
+        <div class="container"></div>
     </header>
 
+    <div class="main-content-wrapper">
     <div class="container">
         <form action="customer_process.php" method="post" enctype="multipart/form-data" class="admin-form">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
@@ -286,8 +273,9 @@ if (!$row) {
             </div>
         </form>
     </div>
-</div>
+    </div>
 
+    <?php if (empty($_SESSION['loggedin'])) { ?>
     <footer>
         <div class="container">
             <div class="footer-contact">
@@ -299,6 +287,7 @@ if (!$row) {
             </div>
         </div>
     </footer>
+    <?php } ?>
 
     <script>
         const API_BASE = 'https://psgc.gitlab.io/api';

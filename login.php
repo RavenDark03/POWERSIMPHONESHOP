@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="css/style.css?v=<?php echo time(); ?>">
 
 </head>
-<body>
+<body class="landing">
     <header>
         <div class="container">
             <a href="index.php" class="logo-container">
@@ -54,6 +54,10 @@
         </form>
     </div>
 
+    <?php
+    if (session_status() == PHP_SESSION_NONE) session_start();
+    if (empty($_SESSION['loggedin'])) {
+    ?>
     <footer>
         <div class="container">
             <div class="footer-contact">
@@ -65,6 +69,7 @@
             </div>
         </div>
     </footer>
+    <?php } ?>
 
     <script>
         const togglePassword = document.querySelector('#togglePassword');

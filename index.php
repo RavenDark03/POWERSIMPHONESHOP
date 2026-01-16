@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css?v=<?php echo time(); ?>">
 </head>
-<body>
+<body class="landing">
     <header>
         <div class="container">
             <a href="index.php" class="logo-container">
@@ -54,6 +54,10 @@
         </div>
     </section>
 
+    <?php
+    if (session_status() == PHP_SESSION_NONE) session_start();
+    if (empty($_SESSION['loggedin'])) {
+    ?>
     <footer>
         <div class="container">
             <div class="footer-contact">
@@ -65,5 +69,6 @@
             </div>
         </div>
     </footer>
+    <?php } ?>
 </body>
 </html>

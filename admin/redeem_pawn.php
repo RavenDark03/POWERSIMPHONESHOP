@@ -34,24 +34,14 @@ $item = $result->fetch_assoc();
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
+<body class="has-sidebar">
+    <?php include '../includes/sidebar_nav.php'; ?>
+
     <header>
-        <div class="container">
-            <a href="index.php" class="logo-container">
-                <img src="../images/powersim logo.png" alt="Powersim Phoneshop" class="logo-img">
-                <span class="logo-text">Powersim Phoneshop</span>
-            </a>
-            <nav>
-                <ul>
-                    <li><a href="index.php">Dashboard</a></li>
-                    <li><a href="customers.php">Customers</a></li>
-                    <li><a href="pawning.php">Pawning</a></li>
-                    <li><a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
-                </ul>
-            </nav>
-        </div>
+        <div class="container"></div>
     </header>
 
+    <div class="main-content-wrapper">
     <div class="container main-content">
         <div style="max-width: 600px; margin: 0 auto;">
             <div style="margin-bottom: 20px; text-align: center;">
@@ -97,7 +87,9 @@ $item = $result->fetch_assoc();
             </div>
         </div>
     </div>
+    </div>
 
+    <?php if (empty($_SESSION['loggedin'])) { ?>
     <footer>
         <div class="container">
             <div class="footer-contact">
@@ -109,5 +101,6 @@ $item = $result->fetch_assoc();
             </div>
         </div>
     </footer>
+    <?php } ?>
 </body>
 </html>

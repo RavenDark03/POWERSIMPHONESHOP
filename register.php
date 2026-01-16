@@ -1,3 +1,8 @@
+<?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -163,6 +168,7 @@
         })();
     </script>
 
+    <?php if (empty($_SESSION['loggedin'])) { ?>
     <footer>
         <div class="container">
             <div class="footer-contact">
@@ -174,5 +180,6 @@
             </div>
         </div>
     </footer>
+    <?php } ?>
 </body>
 </html>

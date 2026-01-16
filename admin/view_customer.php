@@ -47,23 +47,14 @@ if (!$row) {
         .btn-back:hover { background-color: #5a6268; }
     </style>
 </head>
-<body>
+<body class="has-sidebar">
+    <?php include '../includes/sidebar_nav.php'; ?>
+
     <header>
-        <div class="container">
-            <a href="index.php" class="logo-container">
-                <img src="../images/powersim logo.png" alt="Powersim Phoneshop" class="logo-img">
-                <span class="logo-text">Powersim Phoneshop</span>
-            </a>
-            <nav>
-                <ul>
-                    <li><a href="index.php">Dashboard</a></li>
-                    <li><a href="customers.php">Customers</a></li>
-                    <li><a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
-                </ul>
-            </nav>
-        </div>
+        <div class="container"></div>
     </header>
 
+    <div class="main-content-wrapper">
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Customer Details: <?php echo $row['customer_code']; ?></h2>
@@ -123,8 +114,7 @@ if (!$row) {
             </div>
         </div>
     </div>
-
-    <footer>
+    </div>
         <div class="container">
             <div class="footer-contact">
                 <p><i class="fas fa-phone-alt"></i> 0910-809-9699</p>

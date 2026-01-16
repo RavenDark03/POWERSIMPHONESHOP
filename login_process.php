@@ -28,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['role'] = $user['role'];
                 $stmt->close(); $conn->close();
-                header("Location: admin/index.php"); exit();
+                header("Location: admin/index.php?login=1"); exit();
             } else {
                 header("Location: login.php?error=invalid"); exit();
             }
@@ -57,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['email'] = $cust['email'];
                 $_SESSION['role'] = 'customer';
                 $stmt2->close(); $conn->close();
-                header('Location: dashboard.php'); exit();
+                header('Location: dashboard.php?login=1'); exit();
             } else {
                 header('Location: login.php?error=invalid'); exit();
             }

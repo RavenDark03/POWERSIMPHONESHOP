@@ -66,7 +66,7 @@ if (!$user) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
     <style>
-        .form-group { margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }  
         .form-label { display: block; margin-bottom: 8px; font-weight: 500; color: #333; }
         .form-control { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Outfit', sans-serif; font-size: 0.95rem; }
         .form-control:focus { border-color: #0a3d0a; outline: none; }
@@ -85,27 +85,14 @@ if (!$user) {
         .alert-error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
     </style>
 </head>
-<body>
+<body class="has-sidebar">
+    <?php include '../includes/sidebar_nav.php'; ?>
+
     <header>
-        <div class="container">
-            <a href="index.php" class="logo-container">
-                <img src="../images/powersim logo.png" alt="Powersim Phoneshop" class="logo-img">
-                <span class="logo-text">Powersim Phoneshop</span>
-            </a>
-            <nav>
-                <ul>
-                    <li><a href="index.php">Dashboard</a></li>
-                    <li><a href="customers.php">Customers</a></li>
-                    <li><a href="pawning.php">Pawning</a></li>
-                    <li><a href="inventory.php">Inventory</a></li>
-                    <li><a href="reports.php">Reports</a></li>
-                    <li><a href="users.php" style="color: #d4af37;">Users</a></li>
-                    <li><a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
-                </ul>
-            </nav>
-        </div>
+        <div class="container"></div>
     </header>
 
+    <div class="main-content-wrapper">
     <div class="container main-content">
         <div style="margin-bottom: 20px; max-width: 600px; margin-left: auto; margin-right: auto;">
             <a href="users.php" style="color: #666; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;"><i class="fas fa-arrow-left"></i> Back to Users</a>
@@ -162,7 +149,9 @@ if (!$user) {
             </form>
         </div>
     </div>
+    </div>
 
+    <?php if (empty($_SESSION['loggedin'])) { ?>
     <footer>
         <div class="container">
             <div class="footer-contact">
@@ -174,5 +163,6 @@ if (!$user) {
             </div>
         </div>
     </footer>
+    <?php } ?>
 </body>
 </html>

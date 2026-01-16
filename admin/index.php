@@ -19,41 +19,32 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
 </head>
-<body>
+<body class="has-sidebar">
+    <?php include '../includes/sidebar_nav.php'; ?>
+
     <header>
-        <div class="container">
-            <a href="index.php" class="logo-container">
-                <img src="../images/powersim logo.png" alt="Powersim Phoneshop" class="logo-img">
-                <span class="logo-text">Powersim Phoneshop</span>
-            </a>
-            <nav>
-                <ul>
-                    <li><a href="index.php">Dashboard</a></li>
-                    <li><a href="customers.php">Customers</a></li>
-                    <li><a href="pawning.php">Pawning</a></li>
-                    <li><a href="inventory.php">Inventory</a></li>
-                    <li><a href="reports.php">Reports</a></li>
-                    <li><a href="users.php">Users</a></li>
-                    <li><a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
-                </ul>
-            </nav>
-        </div>
+        <div class="container"></div>
     </header>
 
-    <div class="container">
-        <h2>Welcome, <?php echo $_SESSION['username']; ?>!</h2>
-        <p>This is the admin dashboard. You can manage the pawnshop from here.</p>
-    </div>
+    <div class="main-content-wrapper">
 
-    <div class="container" style="margin-top: 20px;">
-        <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-            <h3 style="margin-top: 0; color: #0a3d0a; margin-bottom: 20px;">Monthly Performance (Last 12 Months)</h3>
-            <div style="position: relative; height: 400px; width: 100%;">
-                <canvas id="monthlyChart"></canvas>
+    <div class="main-content-wrapper">
+        <div class="container">
+            <h2>Welcome, <?php echo $_SESSION['username']; ?>!</h2>
+            <p>This is the admin dashboard. You can manage the pawnshop from here.</p>
+        </div>
+
+        <div class="container" style="margin-top: 20px;">
+            <div style="background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 25px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); border: 1px solid rgba(212, 175, 55, 0.1);">
+                <h3 style="margin-top: 0; color: #0a3d0a; margin-bottom: 20px;">Monthly Performance (Last 12 Months)</h3>
+                <div style="position: relative; height: 400px; width: 100%;">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
 
+    <?php if (empty($_SESSION['loggedin'])) { ?>
     <footer>
         <div class="container">
             <div class="footer-contact">
@@ -65,6 +56,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             </div>
         </div>
     </footer>
+    <?php } ?>
 
     <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -140,6 +132,26 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             })
             .catch(error => console.error('Error loading chart data:', error));
     });
+    </script>
+    <script>
+    // Play staggered entrance animations when redirected after login
+    (function(){
+        const params = new URLSearchParams(window.location.search);
+        if (!params.get('login')) return;
+        const containers = document.querySelectorAll('.main-content-wrapper .container');
+        let delay = 60;
+        containers.forEach((el, idx) => {
+            el.style.opacity = 0;
+            el.style.transform = 'translateY(18px)';
+            el.style.filter = 'blur(6px)';
+            el.style.animation = `slideFadeIn 760ms cubic-bezier(0.2,0.8,0.2,1) both`;
+            el.style.animationDelay = (delay * (idx+1)) + 'ms';
+        });
+        // remove the query param so animation doesn't replay
+        params.delete('login');
+        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        window.history.replaceState({}, document.title, newUrl);
+    })();
     </script>
 </body>
 </html>

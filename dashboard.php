@@ -90,5 +90,24 @@ $items_stmt->close();
         </div>
 
     </div>
+    <script>
+    // Stagger card animations when redirected after login
+    (function(){
+        const params = new URLSearchParams(window.location.search);
+        if (!params.get('login')) return;
+        const cards = document.querySelectorAll('.grid .card');
+        let base = 80;
+        cards.forEach((c, i) => {
+            c.style.opacity = 0;
+            c.style.transform = 'translateY(18px)';
+            c.style.filter = 'blur(6px)';
+            c.style.animation = 'fadeUp 760ms cubic-bezier(0.2,0.8,0.2,1) both';
+            c.style.animationDelay = (base * (i+1)) + 'ms';
+        });
+        params.delete('login');
+        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        window.history.replaceState({}, document.title, newUrl);
+    })();
+    </script>
 </body>
 </html>

@@ -79,27 +79,14 @@ $total_profit = $sales_data['total_profit'] ?? 0;
         }
     </style>
 </head>
-<body>
+<body class="has-sidebar">
+    <?php include '../includes/sidebar_nav.php'; ?>
+
     <header>
-        <div class="container">
-            <a href="index.php" class="logo-container">
-                <img src="../images/powersim logo.png" alt="Powersim Phoneshop" class="logo-img">
-                <span class="logo-text">Powersim Phoneshop</span>
-            </a>
-            <nav>
-                <ul>
-                    <li><a href="index.php">Dashboard</a></li>
-                    <li><a href="customers.php">Customers</a></li>
-                    <li><a href="pawning.php">Pawning</a></li>
-                    <li><a href="inventory.php">Inventory</a></li>
-                    <li><a href="reports.php" style="color: #d4af37;">Reports</a></li>
-                    <li><a href="users.php">Users</a></li>
-                    <li><a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
-                </ul>
-            </nav>
-        </div>
+        <div class="container"></div>
     </header>
 
+    <div class="main-content-wrapper">
     <div class="container main-content">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <div>
@@ -329,7 +316,9 @@ $total_profit = $sales_data['total_profit'] ?? 0;
         </table>
 
     </div>
+    </div>
 
+    <?php if (empty($_SESSION['loggedin'])) { ?>
     <footer>
         <div class="container">
             <div class="footer-contact">
@@ -341,5 +330,6 @@ $total_profit = $sales_data['total_profit'] ?? 0;
             </div>
         </div>
     </footer>
+    <?php } ?>
 </body>
 </html>

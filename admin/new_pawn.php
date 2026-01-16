@@ -45,27 +45,14 @@ $customers = $conn->query($sql);
         }
     </style>
 </head>
-<body>
+<body class="has-sidebar">
+    <?php include '../includes/sidebar_nav.php'; ?>
+
     <header>
-        <div class="container">
-            <a href="index.php" class="logo-container">
-                <img src="../images/powersim logo.png" alt="Powersim Phoneshop" class="logo-img">
-                <span class="logo-text">Powersim Phoneshop</span>
-            </a>
-            <nav>
-                <ul>
-                    <li><a href="index.php">Dashboard</a></li>
-                    <li><a href="customers.php">Customers</a></li>
-                    <li><a href="pawning.php" style="color: #d4af37;">Pawning</a></li>
-                    <li><a href="inventory.php">Inventory</a></li>
-                    <li><a href="reports.php">Reports</a></li>
-                    <li><a href="users.php">Users</a></li>
-                    <li><a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
-                </ul>
-            </nav>
-        </div>
+        <div class="container"></div>
     </header>
 
+    <div class="main-content-wrapper">
     <div class="container main-content">
         <div style="max-width: 100%; margin: 0 auto;">
             <!-- Removed separate header div, keeping it inside form for unified look like Add Customer if desired, or keep outside. Add Customer has H2 inside. -->
@@ -411,7 +398,10 @@ $customers = $conn->query($sql);
             }
         }
     </script>
+    </div>
+    </div>
 
+    <?php if (empty($_SESSION['loggedin'])) { ?>
     <footer>
         <div class="container">
             <div class="footer-contact">
@@ -423,5 +413,6 @@ $customers = $conn->query($sql);
             </div>
         </div>
     </footer>
+    <?php } ?>
 </body>
 </html>

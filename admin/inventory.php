@@ -114,27 +114,14 @@ if (isset($_GET['ajax'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
 </head>
-<body>
+<body class="has-sidebar">
+    <?php include '../includes/sidebar_nav.php'; ?>
+
     <header>
-        <div class="container">
-            <a href="index.php" class="logo-container">
-                <img src="../images/powersim logo.png" alt="Powersim Phoneshop" class="logo-img">
-                <span class="logo-text">Powersim Phoneshop</span>
-            </a>
-            <nav>
-                <ul>
-                    <li><a href="index.php">Dashboard</a></li>
-                    <li><a href="customers.php">Customers</a></li>
-                    <li><a href="pawning.php">Pawning</a></li>
-                    <li><a href="inventory.php" style="color: #d4af37;">Inventory</a></li>
-                    <li><a href="reports.php">Reports</a></li>
-                    <li><a href="users.php">Users</a></li>
-                    <li><a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
-                </ul>
-            </nav>
-        </div>
+        <div class="container"></div>
     </header>
 
+    <div class="main-content-wrapper">
     <div class="container">
         <h2>Inventory Management</h2>
         <div class="search-container" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px;">
@@ -251,7 +238,9 @@ if (isset($_GET['ajax'])) {
             </tbody>
         </table>
     </div>
+    </div>
 
+    <?php if (empty($_SESSION['loggedin'])) { ?>
     <footer>
         <div class="container">
             <div class="footer-contact">
@@ -263,6 +252,7 @@ if (isset($_GET['ajax'])) {
             </div>
         </div>
     </footer>
+    <?php } ?>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
