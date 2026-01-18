@@ -20,6 +20,16 @@ $stmt->execute();
 $result = $stmt->get_result();
 $item = $result->fetch_assoc();
 
+// Compute redemption breakdown
+$principal = (float)$item['loan_amount'];
+$interest_rate = (float)$item['interest_rate'];
+$created_ts = strtotime($item['created_at'] ?? 'now');
+$now_ts = time();
+$months_elapsed = max(1, ceil(($now_ts - $created_ts) / (30 * 24 * 60 * 60)));
+$total_interest = round($principal * ($interest_rate / 100) * $months_elapsed, 2);
+$service_charge = 5.00;
+$redemption_amount = $principal + $total_interest + $service_charge;
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,7 +60,7 @@ $item = $result->fetch_assoc();
             </div>
 
             <div style="background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                <form action="pawn_process.php" method="post">
+                <form action="pawn_process.php" method="post" target="_blank">
                     <input type="hidden" name="action" value="redeem_pawn">
                     <input type="hidden" name="id" value="<?php echo $item['id']; ?>">
                     
@@ -71,17 +81,20 @@ $item = $result->fetch_assoc();
                             <span style="font-weight: 500;"><?php echo $item['item_description']; ?></span>
                         </p>
                         <hr style="border: 0; border-top: 1px dashed #ddd; margin: 15px 0;">
-                        <p style="margin: 8px 0; display: flex; justify-content: space-between; font-size: 1.1rem;">
-                            <span style="color: #444;">Total Payment Required:</span>
-                            <span style="font-weight: bold; color: #2e7d32;">₱<?php echo number_format($item['loan_amount'], 2); ?></span>
-                        </p>
+                        <div style="margin: 12px 0;">
+                            <div style="display:flex; justify-content:space-between; margin:4px 0; color:#555;"><span>Principal Loan</span><span>₱<?php echo number_format($principal, 2); ?></span></div>
+                            <div style="display:flex; justify-content:space-between; margin:4px 0; color:#555;"><span>Total Interest (<?php echo $months_elapsed; ?> mo @ <?php echo number_format($interest_rate, 2); ?>%)</span><span>₱<?php echo number_format($total_interest, 2); ?></span></div>
+                            <div style="display:flex; justify-content:space-between; margin:4px 0; color:#555;"><span>Service Charge</span><span>₱<?php echo number_format($service_charge, 2); ?></span></div>
+                            <hr style="border:0; border-top:1px dashed #ddd; margin:10px 0;">
+                            <div style="display:flex; justify-content:space-between; margin:4px 0; font-size:1.1rem; font-weight:700; color:#2e7d32;"><span>Redemption Amount</span><span>₱<?php echo number_format($redemption_amount, 2); ?></span></div>
+                        </div>
                     </div>
 
                     <div style="background: #fff3cd; color: #856404; padding: 12px; border-radius: 6px; font-size: 0.9rem; margin-bottom: 20px; text-align: center; border: 1px solid #ffeeba;">
                         <i class="fas fa-exclamation-triangle"></i> This action will mark the item as redeemed and close the transaction.
                     </div>
 
-                    <button type="submit" class="btn" style="width: 100%; padding: 12px; background-color: #2e7d32;">Confim Redemption</button>
+                    <button type="submit" class="btn" style="width: 100%; padding: 12px; background-color: #2e7d32;">Confirm Redemption &amp; Print Receipt</button>
                     <a href="pawning.php" style="display: block; text-align: center; margin-top: 15px; color: #666; text-decoration: none;">Cancel</a>
                 </form>
             </div>

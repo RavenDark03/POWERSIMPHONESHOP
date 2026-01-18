@@ -1181,6 +1181,62 @@ footer {
     background: rgba(212, 175, 55, 0.5);
 }
 
+/* Admin theme: unify card/table sizing and buttons to match Customer Accounts */
+body.has-sidebar .card {
+    border: 1px solid #e7e9ef;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.05);
+    border-radius: 12px;
+}
+
+body.has-sidebar .card .card-body {
+    padding: 16px;
+}
+
+body.has-sidebar .table {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+body.has-sidebar .table thead th {
+    font-weight: 700;
+    color: #fff;
+    background: var(--primary-color);
+    border-bottom: 0;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+}
+
+body.has-sidebar .table tbody td {
+    border-color: #eef0f4;
+    color: #1f1f1f;
+}
+
+body.has-sidebar .table > :not(caption) > * > * {
+    padding: 14px 12px;
+}
+
+body.has-sidebar .table-hover tbody tr:hover {
+    background: #f0f5ef;
+}
+
+.btn-credentials {
+    background: linear-gradient(135deg, #e5c454, #c9a227);
+    border: none;
+    color: #1f1a08;
+    font-weight: 700;
+    min-width: auto;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    white-space: nowrap;
+}
+
+.btn-credentials:hover {
+    filter: brightness(0.95);
+    color: #1f1a08;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     body {

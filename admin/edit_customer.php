@@ -24,6 +24,15 @@ if (!$row) {
     header("Location: customers.php");
     exit();
 }
+
+// Prepare existing ID images for preview in the upload container
+$front_src = !empty($row['id_image_front_path']) ? '../' . ltrim($row['id_image_front_path'], '/') : '';
+$show_front_preview = $front_src ? 'display:block;' : 'display:none;';
+$front_placeholder_opacity = $front_src ? 'opacity:0;' : '';
+
+$back_src = !empty($row['id_image_back_path']) ? '../' . ltrim($row['id_image_back_path'], '/') : '';
+$show_back_preview = $back_src ? 'display:block;' : 'display:none;';
+$back_placeholder_opacity = $back_src ? 'opacity:0;' : '';
 ?>
 
 <!DOCTYPE html>
@@ -37,7 +46,6 @@ if (!$row) {
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
-    <script src="https://cdn.jsdelivr.net/npm/use-postal-ph@1.0.1/dist/index.js"></script>
     <script src="../js/zipcodes.js"></script>
     <style>
         .form-section { margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
@@ -361,6 +369,26 @@ if (!$row) {
                 });
             }
         });
+
+        // Copy present address into permanent when checkbox is checked
+        function copyAddress() {
+            const same = document.getElementById('same_address');
+            if (!same) return;
+            const fields = ['house_num','street','subdivision','province','city','barangay','zip'];
+            if (same.checked) {
+                fields.forEach(f => {
+                    const src = document.getElementById(`present_${f}`);
+                    const dst = document.getElementById(`permanent_${f}`);
+                    if (src && dst) {
+                        dst.value = src.value;
+                        // keep hidden text fields in sync too
+                        const srcTxt = document.getElementById(`present_${f}_text`);
+                        const dstTxt = document.getElementById(`permanent_${f}_text`);
+                        if (dstTxt && srcTxt) dstTxt.value = srcTxt.value;
+                    }
+                });
+            }
+        }
 
         // Preview Image Logic
         function previewImage(input, previewId, placeholderId) {

@@ -126,10 +126,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             permanent_house_num, permanent_street, permanent_subdivision, permanent_barangay, permanent_city, permanent_province, permanent_zip,
             id_type, other_id_type, id_image_front_path, id_image_back_path,
             email, username, password, registration_source, is_verified
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssssssssssssssssssssssssssi", 
+        $stmt->bind_param("sssssssssssssssssssssssssssi", 
             $customer_code, $first_name, $middle_name, $last_name, $contact_number,
             $present_house_num, $present_street, $present_subdivision, $present_barangay, $present_city, $present_province, $present_zip,
             $permanent_house_num, $permanent_street, $permanent_subdivision, $permanent_barangay, $permanent_city, $permanent_province, $permanent_zip,

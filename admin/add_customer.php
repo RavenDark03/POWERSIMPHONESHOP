@@ -205,6 +205,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 
     <script>
         const API_BASE = 'https://psgc.gitlab.io/api';
+        // Ensure zip code mapping is hydrated from the shared JSON (path relative to admin/)
+        const ZIP_READY = hydrateFromJson('../js/ph_locations.json');
 
         document.addEventListener('DOMContentLoaded', () => {
             loadProvinces('present');
@@ -351,15 +353,17 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
         }
 
         function updateZip(type) {
-             const citySelect = document.getElementById(type + '_city');
-             const cityName = citySelect.options[citySelect.selectedIndex].text;
-             const zipInput = document.getElementById(type + '_zip');
-             zipInput.value = getZipCode(cityName);
+            ZIP_READY.finally(() => {
+                const citySelect = document.getElementById(type + '_city');
+                const cityName = citySelect.options[citySelect.selectedIndex] ? citySelect.options[citySelect.selectedIndex].text : '';
+                const zipInput = document.getElementById(type + '_zip');
+                zipInput.value = getZipCode(cityName);
 
-             const brgySelect = document.getElementById(type + '_barangay');
-             if(brgySelect.selectedIndex > 0) {
-                document.getElementById(type + '_barangay_text').value = brgySelect.options[brgySelect.selectedIndex].text;
-             }
+                const brgySelect = document.getElementById(type + '_barangay');
+                if(brgySelect.selectedIndex > 0) {
+                    document.getElementById(type + '_barangay_text').value = brgySelect.options[brgySelect.selectedIndex].text;
+                }
+            });
         }
 
         function copyAddress() {

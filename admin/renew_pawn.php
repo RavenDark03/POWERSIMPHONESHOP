@@ -66,6 +66,14 @@ $item = $result->fetch_assoc();
                         <input type="date" name="new_due_date" id="new_due_date" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
                     </div>
 
+                    <div id="renewal-calculation" style="margin-top:18px; background:#f4f7f6; padding:12px; border-radius:8px; border:1px solid #e9efee; display:block;">
+                        <h4 style="margin:0 0 8px; font-size:1rem;">Renewal Calculation (Monthly)</h4>
+                        <p style="margin:4px 0;"><strong>Loan Amount:</strong> <span id="calc-loan">₱<?php echo number_format($item['loan_amount'],2); ?></span></p>
+                        <p style="margin:4px 0;"><strong>Interest Rate:</strong> <span id="calc-rate"><?php echo htmlspecialchars($item['interest_rate']); ?>%</span></p>
+                        <p style="margin:4px 0;"><strong>Monthly Interest:</strong> <span id="calc-interest">₱0.00</span></p>
+                        <p style="margin:4px 0;"><strong>Amount Due for Renewal:</strong> <span id="calc-renewal">₱0.00</span></p>
+                    </div>
+
                     <div style="margin-top: 25px;">
                         <button type="submit" class="btn" style="width: 100%; padding: 12px;">Confirm Renewal</button>
                         <a href="pawning.php" style="display: block; text-align: center; margin-top: 15px; color: #666; text-decoration: none;">Cancel</a>
@@ -89,5 +97,46 @@ $item = $result->fetch_assoc();
         </div>
     </footer>
     <?php } ?>
+    <script>
+        // Prefill new due date as current due date + 1 month and calculate renewal amount
+        (function(){
+            const currentDue = '<?php echo $item['due_date']; ?>';
+            const loanAmount = parseFloat('<?php echo $item['loan_amount']; ?>');
+            const interestRate = parseFloat('<?php echo $item['interest_rate']; ?>');
+
+            // helper to add months preserving day where possible
+            function addMonths(dateStr, months) {
+                const d = new Date(dateStr);
+                const day = d.getDate();
+                d.setMonth(d.getMonth() + months);
+                // handle month overflow
+                if (d.getDate() !== day) {
+                    d.setDate(0); // last day of previous month
+                }
+                return d.toISOString().split('T')[0];
+            }
+
+            // set default new due date to +1 month
+            const newDueEl = document.getElementById('new_due_date');
+            if (newDueEl) {
+                try {
+                    newDueEl.value = addMonths(currentDue, 1);
+                    // ensure min is next day after current due
+                    const minDate = addMonths(currentDue, 0);
+                    newDueEl.min = addMonths(minDate, 0);
+                } catch (e) {}
+            }
+
+            // Calculate monthly interest and renewal amount (simple monthly interest)
+            function formatMoney(v){
+                return '₱' + Number(v).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+            }
+
+            const monthlyInterest = loanAmount * (interestRate / 100);
+            document.getElementById('calc-interest').textContent = formatMoney(monthlyInterest);
+            // Renewal amount for one month is typically the interest; show that clearly
+            document.getElementById('calc-renewal').textContent = formatMoney(monthlyInterest);
+        })();
+    </script>
 </body>
 </html>

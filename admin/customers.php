@@ -12,15 +12,15 @@ if (isset($_GET['ajax'])) {
     $search = "";
     if (!empty($_GET['search'])) {
         $search = $conn->real_escape_string($_GET['search']);
-        $sql = "SELECT * FROM customers WHERE 
+        $sql = "SELECT * FROM customers WHERE is_deleted = 0 AND (
                 customer_code LIKE '%$search%' OR 
                 first_name LIKE '%$search%' OR 
                 last_name LIKE '%$search%' OR 
                 CONCAT(first_name, ' ', last_name) LIKE '%$search%' OR
-                contact_number LIKE '%$search%' 
+                contact_number LIKE '%$search%')
                 ORDER BY created_at DESC";
     } else {
-        $sql = "SELECT * FROM customers ORDER BY created_at DESC";
+        $sql = "SELECT * FROM customers WHERE is_deleted = 0 ORDER BY created_at DESC";
     }
     
     $result = $conn->query($sql);
@@ -102,7 +102,7 @@ if (isset($_GET['ajax'])) {
                     </thead>
                     <tbody id="customerTableBody">
                         <?php
-                        $sql = "SELECT * FROM customers ORDER BY created_at DESC";
+                        $sql = "SELECT * FROM customers WHERE is_deleted = 0 ORDER BY created_at DESC";
                         $result = $conn->query($sql);
 
                         if ($result->num_rows > 0) {

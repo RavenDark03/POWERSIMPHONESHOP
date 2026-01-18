@@ -86,7 +86,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->bind_param("i", $id);
             $stmt->execute();
 
-            header("Location: pawning.php");
+            // After renewal, redirect to a receipt showing renewal details
+            header("Location: receipt.php?item_id=" . $id . "&tx=renewal");
             exit();
         } else {
             echo "Error: " . $sql . "<br>" . $conn->error;
@@ -105,7 +106,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->bind_param("i", $id);
             $stmt->execute();
 
-            header("Location: pawning.php");
+            header("Location: receipt.php?item_id=" . $id . "&tx=redemption");
             exit();
         } else {
             echo "Error: " . $sql . "<br>" . $conn->error;

@@ -34,7 +34,22 @@ CREATE TABLE customers (
     id_type VARCHAR(50) NOT NULL,
     other_id_type VARCHAR(100),
     id_image_path VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+    deleted_at DATETIME NULL
+);
+CREATE TABLE archived_customers (
+    id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT(11) UNSIGNED NOT NULL,
+    customer_code VARCHAR(20) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255),
+    contact_number VARCHAR(20),
+    deleted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    deleted_by INT(11) UNSIGNED NULL,
+    INDEX (customer_id),
+    FOREIGN KEY (deleted_by) REFERENCES users(id) ON DELETE SET NULL
 );
 CREATE TABLE items (
     id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -53,17 +68,51 @@ CREATE TABLE items (
     loan_amount DECIMAL(10, 2) NOT NULL,
     interest_rate DECIMAL(5, 2) NOT NULL,
     due_date DATE NOT NULL,
-    status ENUM('pawned', 'redeemed', 'for_sale', 'sold') NOT NULL DEFAULT 'pawned',
+    status ENUM('pawned', 'redeemed', 'for_sale', 'sold', 'archived') NOT NULL DEFAULT 'pawned',
     sale_price DECIMAL(10, 2),
     date_sold DATETIME,
+    archived_at DATETIME NULL,
+    archived_by INT(11) UNSIGNED NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES customers(id)
+    FOREIGN KEY (customer_id) REFERENCES customers(id),
+    FOREIGN KEY (archived_by) REFERENCES users(id)
 );
 CREATE TABLE transactions (
     id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     item_id INT(11) UNSIGNED NOT NULL,
     transaction_type ENUM('pawn', 'renewal', 'redemption') NOT NULL,
     transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (item_id) REFERENCES items(id)
+);
+
+-- Lookup tables for normalized item data
+CREATE TABLE item_categories (
+    id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE item_types (
+    id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    category_id INT(11) UNSIGNED DEFAULT NULL,
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY (category_id, name),
+    FOREIGN KEY (category_id) REFERENCES item_categories(id)
+);
+
+CREATE TABLE item_conditions (
+    id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Optional notes table to store longer descriptions separately (one-to-one)
+CREATE TABLE item_notes (
+    id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    item_id INT(11) UNSIGNED NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (item_id) REFERENCES items(id)
 );
 

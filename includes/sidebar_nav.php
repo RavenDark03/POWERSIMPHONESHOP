@@ -24,6 +24,12 @@
             </a>
         </li>
         <li class="sidebar-item">
+            <a href="customer_accounts.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'customer_accounts.php') ? 'active' : ''; ?>">
+                <i class="fas fa-user-circle"></i>
+                <span class="sidebar-text">Customer Accounts</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
             <a href="pawning.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'pawning.php' || basename($_SERVER['PHP_SELF']) === 'new_pawn.php' || basename($_SERVER['PHP_SELF']) === 'view_pawn.php' || basename($_SERVER['PHP_SELF']) === 'redeem_pawn.php' || basename($_SERVER['PHP_SELF']) === 'renew_pawn.php') ? 'active' : ''; ?>">
                 <i class="fas fa-ring"></i>
                 <span class="sidebar-text">Pawning</span>
@@ -36,6 +42,18 @@
             </a>
         </li>
         <li class="sidebar-item">
+            <a href="auctioned.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'auctioned.php') ? 'active' : ''; ?>">
+                <i class="fas fa-gavel"></i>
+                <span class="sidebar-text">Auctioned Items</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="archived.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'archived.php') ? 'active' : ''; ?>">
+                <i class="fas fa-box-archive"></i>
+                <span class="sidebar-text">Archived</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
             <a href="reports.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'reports.php') ? 'active' : ''; ?>">
                 <i class="fas fa-file-alt"></i>
                 <span class="sidebar-text">Reports</span>
@@ -44,7 +62,7 @@
         <li class="sidebar-item">
             <a href="users.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'users.php' || basename($_SERVER['PHP_SELF']) === 'view_user.php') ? 'active' : ''; ?>">
                 <i class="fas fa-user-tie"></i>
-                <span class="sidebar-text">Users</span>
+                <span class="sidebar-text">Employee Accounts</span>
             </a>
         </li>
     </ul>

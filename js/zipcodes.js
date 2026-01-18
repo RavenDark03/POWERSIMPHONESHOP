@@ -245,31 +245,15 @@ async function autoGroupFlatMap(apiBase = 'https://psgc.gitlab.io/api') {
     }
 }
 
-// Run auto-grouping in background if fetch is available
-if (typeof fetch === 'function') {
+// Disable background fetch/auto-group to avoid download prompts in production pages.
+// If you need to regenerate grouped data, call hydrateFromJson()/autoGroupFlatMap() manually in console.
+const ZIP_SHOULD_FETCH = false;
+if (ZIP_SHOULD_FETCH && typeof fetch === 'function') {
     hydrateFromJson().then(stats => {
         console.info('zipcodes: hydrateFromJson completed', stats);
     }).catch(() => {}).finally(() => {
         autoGroupFlatMap().then(stats => {
             console.info('zipcodes: autoGroupFlatMap completed', stats);
-            try {
-                // Log a compact JSON and trigger a download so you can copy/paste the grouped mapping for commit
-                const json = JSON.stringify(PROVINCE_ZIP, null, 2);
-                console.info('zipcodes: grouped mapping (also starting download)');
-                console.log(json);
-                // Trigger automatic download in the browser
-                const blob = new Blob([json], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'province_zip_grouped.json';
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                URL.revokeObjectURL(url);
-            } catch (e) {
-                console.error('zipcodes: export failed', e);
-            }
         }).catch(() => {});
     });
 }

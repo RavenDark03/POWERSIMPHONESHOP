@@ -1,40 +1,46 @@
 <?php
 session_start();
-include '../includes/connection.php';
+include 'includes/connection.php';
 
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    header("Location: ../login.php");
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true || ($_SESSION['role'] ?? '') !== 'customer') {
+    header('Location: login.php');
     exit();
 }
 
 if (!isset($_GET['item_id'])) {
-    die("Error: Item ID is missing.");
+    http_response_code(400);
+    echo 'Missing item id';
+    exit();
 }
 
-$item_id = $_GET['item_id'];
+$item_id = (int) $_GET['item_id'];
+$customer_id = (int) $_SESSION['id'];
 
-$sql = "SELECT i.*, c.first_name, c.last_name, CONCAT_WS(' ', c.present_house_num, c.present_street, c.present_subdivision, c.present_barangay, c.present_city, c.present_province, c.present_zip) as address, c.contact_number, c.email,
-    COALESCE(ic.name, i.category) AS category_display,
-    COALESCE(it.name, i.item_type) AS item_type_display,
-    COALESCE(cond.name, i.item_condition) AS item_condition_display,
-    COALESCE(n.notes, i.item_description) AS item_description_display
-    FROM items i
-    JOIN customers c ON i.customer_id = c.id
-    LEFT JOIN item_categories ic ON ic.name = i.category
-    LEFT JOIN item_types it ON it.name = i.item_type
-    LEFT JOIN item_conditions cond ON cond.name = i.item_condition
-    LEFT JOIN item_notes n ON n.item_id = i.id
-    WHERE i.id = ?";
+$sql = "SELECT i.*, c.first_name, c.last_name, c.customer_code, c.contact_number, c.email,
+        CONCAT_WS(' ', c.present_house_num, c.present_street, c.present_subdivision, c.present_barangay, c.present_city, c.present_province, c.present_zip) AS address,
+        COALESCE(ic.name, i.category) AS category_display,
+        COALESCE(it.name, i.item_type) AS item_type_display,
+        COALESCE(cond.name, i.item_condition) AS item_condition_display,
+        COALESCE(n.notes, i.item_description) AS item_description_display
+        FROM items i
+        JOIN customers c ON i.customer_id = c.id
+        LEFT JOIN item_categories ic ON ic.name = i.category
+        LEFT JOIN item_types it ON it.name = i.item_type
+        LEFT JOIN item_conditions cond ON cond.name = i.item_condition
+        LEFT JOIN item_notes n ON n.item_id = i.id
+        WHERE i.id = ? AND i.customer_id = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $item_id);
+$stmt->bind_param('ii', $item_id, $customer_id);
 $stmt->execute();
-$result = $stmt->get_result();
+$res = $stmt->get_result();
 
-if ($result->num_rows === 0) {
-    die("Error: Pawn transaction not found.");
+if ($res->num_rows === 0) {
+    http_response_code(404);
+    echo 'Receipt not found';
+    exit();
 }
 
-$pawn = $result->fetch_assoc();
+$pawn = $res->fetch_assoc();
 $pawn_ticket_number = 'PS' . str_pad($pawn['id'], 8, '0', STR_PAD_LEFT);
 $tx = isset($_GET['tx']) ? $_GET['tx'] : '';
 
@@ -62,7 +68,7 @@ if ($tx === 'redemption') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pawn Receipt</title>
-    <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="css/style.css?v=<?php echo time(); ?>">
     <style>
         @page { size: A4; margin: 10mm 8mm; }
         body { background:#f6f7fb; font-family: 'Outfit', 'Arial', sans-serif; color:#0f172a; }
@@ -143,7 +149,7 @@ if ($tx === 'redemption') {
 <body>
     <div class="receipt-container" id="receipt">
         <div class="receipt-header">
-            <img src="../images/powersim logo.png" alt="Powersim Phoneshop">
+            <img src="images/powersim logo.png" alt="Powersim Phoneshop">
             <h1>Powersim Phoneshop Gadget Trading Inc.</h1>
             <p>Baliuag, Bulacan</p>
         </div>
@@ -168,18 +174,6 @@ if ($tx === 'redemption') {
             <table>
                 <tr>
                     <th>Name:</th>
-
-        <?php if ($tx === 'redemption'): ?>
-        <div class="redemption-details">
-            <div class="section-title">Redemption Breakdown</div>
-            <table class="loan-table">
-                <tr><th>Principal Loan:</th><td>₱<?php echo number_format($principal, 2); ?></td></tr>
-                <tr><th>Total Interest (<?php echo $months_elapsed; ?> mo @ <?php echo number_format($interest_rate, 2); ?>%):</th><td>₱<?php echo number_format($total_interest, 2); ?></td></tr>
-                <tr><th>Service Charge:</th><td>₱<?php echo number_format($service_charge, 2); ?></td></tr>
-                <tr><th>Redemption Amount:</th><td><span class="total-amount">₱<?php echo number_format($redemption_amount, 2); ?></span></td></tr>
-            </table>
-        </div>
-        <?php endif; ?>
                     <td><?php echo htmlspecialchars($pawn['first_name'] . ' ' . $pawn['last_name']); ?></td>
                 </tr>
                 <tr>
@@ -196,6 +190,18 @@ if ($tx === 'redemption') {
                 </tr>
             </table>
         </div>
+
+        <?php if ($tx === 'redemption'): ?>
+        <div class="redemption-details">
+            <div class="section-title">Redemption Breakdown</div>
+            <table class="loan-table">
+                <tr><th>Principal Loan:</th><td>₱<?php echo number_format($principal, 2); ?></td></tr>
+                <tr><th>Total Interest (<?php echo $months_elapsed; ?> mo @ <?php echo number_format($interest_rate, 2); ?>%):</th><td>₱<?php echo number_format($total_interest, 2); ?></td></tr>
+                <tr><th>Service Charge:</th><td>₱<?php echo number_format($service_charge, 2); ?></td></tr>
+                <tr><th>Redemption Amount:</th><td><span class="total-amount">₱<?php echo number_format($redemption_amount, 2); ?></span></td></tr>
+            </table>
+        </div>
+        <?php endif; ?>
 
         <div class="item-details">
             <div class="item-section">
@@ -307,7 +313,7 @@ if ($tx === 'redemption') {
 
     <div class="actions">
         <button class="btn-print" onclick="window.print()">Print Receipt</button>
-        <a href="pawning.php" class="btn-back">Back to Pawning List</a>
+        <a href="dashboard.php" class="btn-back">Back to Dashboard</a>
     </div>
 
 </body>

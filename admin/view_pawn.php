@@ -16,14 +16,25 @@ $id = intval($_GET['id']);
 
 // Fetch Item + Customer Details
 $sql = "SELECT items.*, 
-        customers.id AS cust_id, 
-        customers.customer_code, 
-        CONCAT(customers.first_name, ' ', customers.last_name) AS customer_name,
-        customers.contact_number,
-        customers.present_barangay, customers.present_city
-        FROM items 
-        JOIN customers ON items.customer_id = customers.id 
-        WHERE items.id = ?";
+    ic.id AS category_id,
+    it.id AS item_type_id,
+    cond.id AS condition_id,
+    customers.id AS cust_id,
+    customers.customer_code,
+    CONCAT(customers.first_name, ' ', customers.last_name) AS customer_name,
+    customers.contact_number,
+    customers.present_barangay, customers.present_city,
+    COALESCE(ic.name, items.category) AS category_display,
+    COALESCE(it.name, items.item_type) AS item_type_display,
+    COALESCE(cond.name, items.item_condition) AS item_condition_display,
+    COALESCE(n.notes, items.item_description) AS item_description_display
+    FROM items
+    JOIN customers ON items.customer_id = customers.id
+    LEFT JOIN item_categories ic ON ic.name = items.category
+    LEFT JOIN item_types it ON it.name = items.item_type
+    LEFT JOIN item_conditions cond ON cond.name = items.item_condition
+    LEFT JOIN item_notes n ON n.item_id = items.id
+    WHERE items.id = ?";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $id);
@@ -38,12 +49,12 @@ if ($result->num_rows === 0) {
 $item = $result->fetch_assoc();
 
 // Smart Name Logic
-$displayName = $item['item_description'];
+$displayName = $item['item_description_display'];
 if (empty($displayName) || strlen($displayName) < 5) {
     if (!empty($item['brand'])) {
         $displayName = $item['brand'] . ' ' . $item['model'];
-    } elseif (!empty($item['item_type'])) {
-        $displayName = $item['item_type'];
+    } elseif (!empty($item['item_type_display'])) {
+        $displayName = $item['item_type_display'];
         if (!empty($item['purity'])) {
             $displayName = $item['purity'] . ' ' . $displayName;
         }
@@ -148,13 +159,13 @@ if (empty($displayName) || strlen($displayName) < 5) {
                     
                     <div class="info-row">
                         <span class="info-label">Category</span>
-                        <span class="info-value"><?php echo htmlspecialchars($item['category']); ?></span>
+                        <span class="info-value"><?php echo htmlspecialchars($item['category_display']); ?><?php if (!empty($item['category_id'])) { echo " <span style='color:#999;'>[id:" . intval($item['category_id']) . "]</span>"; } ?></span>
                     </div>
 
-                    <?php if (!empty($item['item_type'])): ?>
+                    <?php if (!empty($item['item_type_display'])): ?>
                     <div class="info-row">
                         <span class="info-label">Type</span>
-                        <span class="info-value"><?php echo htmlspecialchars($item['item_type']); ?></span>
+                        <span class="info-value"><?php echo htmlspecialchars($item['item_type_display']); ?><?php if (!empty($item['item_type_id'])) { echo " <span style='color:#999;'>[id:" . intval($item['item_type_id']) . "]</span>"; } ?></span>
                     </div>
                     <?php endif; ?>
 
@@ -167,7 +178,7 @@ if (empty($displayName) || strlen($displayName) < 5) {
 
                     <div class="info-row">
                         <span class="info-label">Condition</span>
-                        <span class="info-value"><?php echo htmlspecialchars($item['item_condition']); ?></span>
+                        <span class="info-value"><?php echo htmlspecialchars($item['item_condition_display']); ?><?php if (!empty($item['condition_id'])) { echo " <span style='color:#999;'>[id:" . intval($item['condition_id']) . "]</span>"; } ?></span>
                     </div>
 
                     <div class="info-row">
@@ -178,7 +189,7 @@ if (empty($displayName) || strlen($displayName) < 5) {
                     <div style="margin-top: 15px;">
                         <span class="info-label" style="display: block; margin-bottom: 5px;">Description / Notes</span>
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 4px; color: #555; font-size: 0.9rem;">
-                            <?php echo nl2br(htmlspecialchars($item['item_description'])); ?>
+                            <?php echo nl2br(htmlspecialchars($item['item_description_display'])); ?>
                         </div>
                     </div>
                     
@@ -193,7 +204,7 @@ if (empty($displayName) || strlen($displayName) < 5) {
                 </div>
 
                 <!-- Specs Box (Conditional) -->
-                <?php if ($item['category'] == 'Jewelry' || !empty($item['weight_grams']) || !empty($item['gemstones'])): ?>
+                <?php if ($item['category_display'] == 'Jewelry' || !empty($item['weight_grams']) || !empty($item['gemstones'])): ?>
                 <div class="detail-card">
                      <div class="section-title"><i class="far fa-gem"></i> Specifications</div>
                      <?php if (!empty($item['weight_grams'])): ?>
