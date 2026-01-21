@@ -37,7 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // If not a staff user, try customers (match by email OR username)
-    $sql2 = "SELECT id, customer_code, username, email, password, is_verified FROM customers WHERE email = ? OR username = ? LIMIT 1";
+    $sql2 = "SELECT id, customer_code, username, email, password, is_verified, account_status FROM customers WHERE email = ? OR username = ? LIMIT 1";
     $stmt2 = $conn->prepare($sql2);
     if ($stmt2) {
         $stmt2->bind_param("ss", $identifier, $identifier);
@@ -46,10 +46,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($res2->num_rows == 1) {
             $cust = $res2->fetch_assoc();
             if (password_verify($password, $cust['password'])) {
+                // Check email verification first
                 if (empty($cust['is_verified']) || $cust['is_verified'] == 0) {
-                    // not verified yet
-                    header("Location: login.php?error=pending"); exit();
+                    header("Location: login.php?error=not_verified"); exit();
                 }
+                // Check account approval status - rejected accounts cannot login
+                $account_status = $cust['account_status'] ?? 'approved';
+                if ($account_status === 'rejected') {
+                    header("Location: login.php?error=account_rejected"); exit();
+                }
+                // Note: Pending customers CAN login but cannot pawn until approved
                 $_SESSION['loggedin'] = true;
                 $_SESSION['id'] = $cust['id'];
                 $_SESSION['customer_code'] = $cust['customer_code'];

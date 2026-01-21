@@ -57,11 +57,11 @@ if (isset($_GET['ajax'])) {
     if ($result->num_rows > 0) {
         while($row = $result->fetch_assoc()) {
             echo "<tr>";
-            echo "<td>" . sprintf("PT-%06d", $row['id']) . "</td>";
+            echo "<td class='fw-semibold text-success'>" . sprintf("PT-%06d", $row['id']) . "</td>";
             echo "<td>" . $row['customer_name'] . "</td>";
-            echo "<td style='vertical-align: middle;'>";
+            echo "<td>";
             
-            $displayName = $row['item_description_display']; // Default to description/notes (notes table preferred)
+            $displayName = $row['item_description_display'];
 
             if (empty($displayName) || strlen($displayName) < 5) {
                 if (!empty($row['brand'])) {
@@ -74,34 +74,28 @@ if (isset($_GET['ajax'])) {
                 }
             }
 
-                if (!empty($displayName)) {
-                    echo "<div style='font-weight: 500; margin-bottom: 2px;'>" . $displayName . "</div>";
-                }
-                $meta = '';
-                if (!empty($row['item_type_id'])) { $meta .= 'type_id:' . $row['item_type_id']; }
-                if (!empty($row['category_id'])) { $meta .= ($meta ? ' | ' : '') . 'category_id:' . $row['category_id']; }
-                if (!empty($row['condition_id'])) { $meta .= ($meta ? ' | ' : '') . 'condition_id:' . $row['condition_id']; }
-                $sub = !empty($row['item_type_display']) ? $row['item_type_display'] : $row['category_display'];
-                echo "<div style='font-size:0.85rem; color:#666;'>" . $sub . (empty($meta) ? '' : " <span style='color:#999;'>[".$meta."]</span>") . "</div>";
+            if (!empty($displayName)) {
+                echo "<div class='fw-semibold mb-1'>" . $displayName . "</div>";
+            }
+            $meta = '';
+            if (!empty($row['item_type_id'])) { $meta .= 'type_id:' . $row['item_type_id']; }
+            if (!empty($row['category_id'])) { $meta .= ($meta ? ' | ' : '') . 'category_id:' . $row['category_id']; }
+            if (!empty($row['condition_id'])) { $meta .= ($meta ? ' | ' : '') . 'condition_id:' . $row['condition_id']; }
+            $sub = !empty($row['item_type_display']) ? $row['item_type_display'] : $row['category_display'];
+            echo "<div class='text-muted small'>" . $sub . (empty($meta) ? '' : " <span class='text-muted'>[".$meta."]</span>") . "</div>";
             echo "</td>";
             echo "<td>" . number_format($row['loan_amount'], 2) . "</td>";
             echo "<td>" . date('M d, Y', strtotime($row['due_date'])) . "</td>";
             $statusClass = 'status-' . $row['status'];
             echo "<td><span class='status-pill " . $statusClass . "'>" . ucfirst(str_replace('_', ' ', $row['status'])) . "</span></td>";
-            echo "<td>";
-                if ($row['status'] == 'pawned') {
-                    // Active status removed - no display needed
-                } elseif ($row['status'] == 'redeemed') {
-                    echo "<span class='action-pill' style='background:#e9f9f1; color:#1f7a3b;'>Redeemed</span>";
-                } elseif ($row['status'] == 'for_sale') {
+            echo "<td class='text-center'>";
+                if ($row['status'] == 'for_sale') {
                 echo "<form action='change_status.php' method='POST' style='display:inline-flex; align-items:center; gap:5px;'>
                                 <input type='hidden' name='id' value='" . $row['id'] . "'>
                                 <input type='hidden' name='status' value='sold'>
                                 <input type='number' name='sale_price' placeholder='Price' step='0.01' required style='width: 80px; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.8rem;'>
-                                <button type='submit' class='btn' style='padding: 4px 10px; font-size: 0.8rem; height: auto; min-width: auto;'>Sell</button>
+                                <button type='submit' class='btn btn-sm btn-primary' style='padding: 4px 10px; height: auto; min-width: auto;'>Sell</button>
                             </form>";
-            } elseif ($row['status'] == 'sold') {
-                echo "<span class='action-pill' style='background:#fdecea; color:#a62b2b;'>Sold</span>";
             }
 
             // ARCHIVE BUTTON (Admin Only)
@@ -113,7 +107,7 @@ if (isset($_GET['ajax'])) {
             echo "</tr>";
         }
     } else {
-        echo "<tr><td colspan='7'>No items found matching your search</td></tr>";
+        echo "<tr><td colspan='7' class='text-center py-3 text-muted'>No items found matching your search.</td></tr>";
     }
     exit(); // Stop execution here for AJAX calls
 }
@@ -127,6 +121,7 @@ if (isset($_GET['ajax'])) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
     <style>
@@ -165,48 +160,9 @@ if (isset($_GET['ajax'])) {
     </header>
 
     <div class="main-content-wrapper">
-    <div class="container">
-        <h2>Inventory Management</h2>
-        <div class="search-container" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px;">
-            <form id="inventoryFilterForm" method="GET" action="inventory.php" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 250px;">
-                    <label for="search" style="display: block; margin-bottom: 8px; font-weight: 500; color: #333;">Search</label>
-                    <input type="text" name="search" id="search" placeholder="Item Name, ID, or Customer" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                <div style="width: 200px;">
-                    <label for="status" style="display: block; margin-bottom: 8px; font-weight: 500; color: #333;">Status</label>
-                    <select name="status" id="status" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                        <option value="all">All Statuses</option>
-                        <option value="pawned" <?php echo (isset($_GET['status']) && $_GET['status'] == 'pawned') ? 'selected' : ''; ?>>Pawned</option>
-                        <option value="for_sale" <?php echo (isset($_GET['status']) && $_GET['status'] == 'for_sale') ? 'selected' : ''; ?>>For Sale</option>
-                        <option value="sold" <?php echo (isset($_GET['status']) && $_GET['status'] == 'sold') ? 'selected' : ''; ?>>Sold</option>
-                        <option value="redeemed" <?php echo (isset($_GET['status']) && $_GET['status'] == 'redeemed') ? 'selected' : ''; ?>>Redeemed</option>
-                        <option value="archived" <?php echo (isset($_GET['status']) && $_GET['status'] == 'archived') ? 'selected' : ''; ?>>Archived</option>
-                    </select>
-                </div>
-
-            </form>
-        </div>
-
-        <table class="customer-table">
-            <thead>
-                <tr>
-                    <th>Item ID</th>
-                    <th>Customer</th>
-                    <th>Item</th>
-                    <th>Loan Amount</th>
-                    <th>Due Date</th>
-                    <th>Status</th>
-                    <th>        </th>
-                </tr>
-            </thead>
-            <tbody id="inventoryTableBody">
-                <?php
-                // Initial Load (Non-AJAX)
-                // Reuse the same logic logic by calling the query or simply copying the block above.
-                // For simplicity in this single-file edit, I will copy the logic structure one last time to ensure it works even if JS is disabled.
-                // Ideally, this should be refactored into a function.
-                
+        <div class="container main-content py-4">
+            <?php
+                // Re-run base query for initial load and total count
                 $conditions = [];
                 if (!empty($_GET['search'])) {
                     $search = $conn->real_escape_string($_GET['search']);
@@ -236,59 +192,108 @@ if (isset($_GET['ajax'])) {
                 $sql .= " ORDER BY items.created_at DESC";
 
                 $result = $conn->query($sql);
+                $totalItems = $result ? $result->num_rows : 0;
+            ?>
 
-                if ($result->num_rows > 0) {
-                    while($row = $result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td>" . sprintf("PT-%06d", $row['id']) . "</td>";
-                        echo "<td>" . $row['customer_name'] . "</td>";
-                        echo "<td style='vertical-align: middle;'>";
-                        
-                        $displayName = $row['item_description_display'];
-                        if (empty($displayName) || strlen($displayName) < 5) {
-                            if (!empty($row['brand'])) {
-                                $displayName = $row['brand'] . ' ' . $row['model'];
-                            } elseif (!empty($row['item_type_display'])) {
-                                $displayName = $row['item_type_display'];
-                                if (!empty($row['purity'])) { $displayName = $row['purity'] . ' ' . $displayName; }
-                            }
-                        }
+            <div class="page-hero">
+                <div>
+                    <h2 class="page-hero-title"><i class="fas fa-boxes-stacked"></i> Inventory Management</h2>
+                    <p class="page-hero-subtitle">Track pawned, for-sale, and sold items.</p>
+                </div>
+                <div class="page-hero-actions">
+                    <div class="badge bg-light text-dark" style="padding:10px 14px; border:1px solid #e5e7eb; border-radius:10px; font-weight:600;">
+                        Total Items: <?php echo $totalItems; ?>
+                    </div>
+                </div>
+            </div>
 
-                        if (!empty($displayName)) {
-                            echo "<div style='font-weight: 500; margin-bottom: 2px;'>" . $displayName . "</div>";
-                        }
-                        echo "<div style='font-size:0.85rem; color:#666;'>" . (!empty($row['item_type_display']) ? $row['item_type_display'] : $row['category_display']) . "</div>";
-                        echo "</td>";
-                        echo "<td>" . number_format($row['loan_amount'], 2) . "</td>";
-                        echo "<td>" . date('M d, Y', strtotime($row['due_date'])) . "</td>";
-                        $statusClass = 'status-' . $row['status'];
-                        echo "<td><span class='status-pill " . $statusClass . "'>" . ucfirst(str_replace('_', ' ', $row['status'])) . "</span></td>";
-                        echo "<td>";
-                        if ($row['status'] == 'pawned') {
-                             // Active status removed - no display needed
-                        } elseif ($row['status'] == 'for_sale') {
-                            echo "<form action='change_status.php' method='POST' style='display:inline-flex; align-items:center; gap:5px;'>
-                                <input type='hidden' name='id' value='" . $row['id'] . "'>
-                                <input type='hidden' name='status' value='sold'>
-                                <input type='number' name='sale_price' placeholder='Price' step='0.01' required style='width: 80px; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.8rem;'>
-                                <button type='submit' class='btn' style='padding: 4px 10px; font-size: 0.8rem; height: auto; min-width: auto;'>Sell</button>
-                            </form>";
-                        }
+            <div class="card mb-3">
+                <div class="card-body">
+                    <form id="inventoryFilterForm" class="row g-3 align-items-end mb-3" method="GET" action="inventory.php">
+                        <div class="col-12 col-md-8">
+                            <label for="search" class="form-label mb-1">Search</label>
+                            <input type="text" name="search" id="search" class="form-control" placeholder="Item Name, ID, or Customer" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="status" class="form-label mb-1">Status</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="all">All Statuses</option>
+                                <option value="pawned" <?php echo (isset($_GET['status']) && $_GET['status'] == 'pawned') ? 'selected' : ''; ?>>Pawned</option>
+                                <option value="for_sale" <?php echo (isset($_GET['status']) && $_GET['status'] == 'for_sale') ? 'selected' : ''; ?>>For Sale</option>
+                                <option value="sold" <?php echo (isset($_GET['status']) && $_GET['status'] == 'sold') ? 'selected' : ''; ?>>Sold</option>
+                                <option value="redeemed" <?php echo (isset($_GET['status']) && $_GET['status'] == 'redeemed') ? 'selected' : ''; ?>>Redeemed</option>
+                                <option value="archived" <?php echo (isset($_GET['status']) && $_GET['status'] == 'archived') ? 'selected' : ''; ?>>Archived</option>
+                            </select>
+                        </div>
+                    </form>
 
-                        // DELETE BUTTON (Admin Only)
-                        if ($_SESSION['role'] === 'admin') {
-                            echo " <a href='delete_item.php?id=" . $row['id'] . "' class='action-icon delete-icon' title='Delete Item' onclick=\"return confirm('Are you sure you want to delete this item? This will permanently remove all associated transaction history.');\"><i class='fas fa-trash'></i></a>";
-                        }
-                        echo "</td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='7'>No items found matching your search</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
-    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item ID</th>
+                                    <th>Customer</th>
+                                    <th>Item</th>
+                                    <th>Loan Amount</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTableBody">
+                                <?php
+                                if ($result && $result->num_rows > 0) {
+                                    while($row = $result->fetch_assoc()) {
+                                        echo "<tr>";
+                                        echo "<td class='fw-semibold text-success'>" . sprintf("PT-%06d", $row['id']) . "</td>";
+                                        echo "<td>" . $row['customer_name'] . "</td>";
+                                        echo "<td>";
+
+                                        $displayName = $row['item_description_display'];
+                                        if (empty($displayName) || strlen($displayName) < 5) {
+                                            if (!empty($row['brand'])) {
+                                                $displayName = $row['brand'] . ' ' . $row['model'];
+                                            } elseif (!empty($row['item_type_display'])) {
+                                                $displayName = $row['item_type_display'];
+                                                if (!empty($row['purity'])) { $displayName = $row['purity'] . ' ' . $displayName; }
+                                            }
+                                        }
+
+                                        if (!empty($displayName)) {
+                                            echo "<div class='fw-semibold mb-1'>" . $displayName . "</div>";
+                                        }
+                                        echo "<div class='text-muted small'>" . (!empty($row['item_type_display']) ? $row['item_type_display'] : $row['category_display']) . "</div>";
+                                        echo "</td>";
+                                        echo "<td>" . number_format($row['loan_amount'], 2) . "</td>";
+                                        echo "<td>" . date('M d, Y', strtotime($row['due_date'])) . "</td>";
+                                        $statusClass = 'status-' . $row['status'];
+                                        echo "<td><span class='status-pill " . $statusClass . "'>" . ucfirst(str_replace('_', ' ', $row['status'])) . "</span></td>";
+                                        echo "<td class='text-center'>";
+                                        if ($row['status'] == 'for_sale') {
+                                            echo "<form action='change_status.php' method='POST' style='display:inline-flex; align-items:center; gap:5px;'>
+                                                <input type='hidden' name='id' value='" . $row['id'] . "'>
+                                                <input type='hidden' name='status' value='sold'>
+                                                <input type='number' name='sale_price' placeholder='Price' step='0.01' required style='width: 80px; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.8rem;'>
+                                                <button type='submit' class='btn btn-sm btn-primary' style='padding: 4px 10px; height: auto; min-width: auto;'>Sell</button>
+                                            </form>";
+                                        }
+
+                                        if ($_SESSION['role'] === 'admin') {
+                                            echo " <a href='delete_item.php?id=" . $row['id'] . "' class='action-icon delete-icon' title='Delete Item' onclick=\"return confirm('Are you sure you want to delete this item? This will permanently remove all associated transaction history.');\"><i class='fas fa-trash'></i></a>";
+                                        }
+                                        echo "</td>";
+                                        echo "</tr>";
+                                    }
+                                } else {
+                                    echo "<tr><td colspan='7' class='text-center py-3 text-muted'>No items found matching your search.</td></tr>";
+                                }
+                                ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <?php if (empty($_SESSION['loggedin'])) { ?>

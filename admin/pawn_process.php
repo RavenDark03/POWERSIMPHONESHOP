@@ -57,17 +57,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $loan_amount = $_POST['loan_amount'];
         $interest_rate = $_POST['interest_rate'];
         $due_date = $_POST['due_date'];
+        
+        // Check if this is a clerk submission (pending appraisal)
+        $isPendingAppraisal = isset($_POST['submission_type']) && $_POST['submission_type'] === 'pending_appraisal';
+        // Check if this is an appraiser submission (pending manager approval)
+        $isPendingManagerApproval = isset($_POST['submission_type']) && $_POST['submission_type'] === 'pending_manager_approval';
+        
+        // Determine status based on submission type
+        if ($isPendingAppraisal) {
+            $status = 'pending';
+            $loan_amount = 0;
+            $interest_rate = 0;
+            // Set a placeholder due date (will be set by appraiser)
+            $due_date = date('Y-m-d', strtotime('+3 months'));
+        } elseif ($isPendingManagerApproval) {
+            $status = 'pending_approval';
+        } else {
+            $status = 'pawned';
+        }
 
-        $sql = "INSERT INTO items (customer_id, item_description, category, item_type, brand, model, serial_number, accessories, weight_grams, purity, gemstones, item_condition, loan_amount, interest_rate, due_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO items (customer_id, item_description, category, item_type, brand, model, serial_number, accessories, weight_grams, purity, gemstones, item_condition, loan_amount, interest_rate, due_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("isssssssdsssdds", $customer_id, $item_description, $category, $item_type, $brand, $model, $serial_number, $accessories, $weight_grams, $purity, $gemstones, $item_condition, $loan_amount, $interest_rate, $due_date);
+        $stmt->bind_param("isssssssdsssdiss", $customer_id, $item_description, $category, $item_type, $brand, $model, $serial_number, $accessories, $weight_grams, $purity, $gemstones, $item_condition, $loan_amount, $interest_rate, $due_date, $status);
 
         if ($stmt->execute()) {
             $item_id = $stmt->insert_id;
-            $sql = "INSERT INTO transactions (item_id, transaction_type) VALUES (?, 'pawn')";
-            $stmt = $conn->prepare($sql);
-            header("Location: receipt.php?item_id=" . $item_id);
-            exit();
+            
+            if ($isPendingAppraisal) {
+                // Redirect to confirmation page for clerk
+                header("Location: appraisal_queue.php?msg=pending_submitted&item_id=" . $item_id);
+                exit();
+            } elseif ($isPendingManagerApproval) {
+                // Redirect to appraisal queue for appraiser submission
+                header("Location: appraisal_queue.php?msg=appraisal_submitted&item_id=" . $item_id);
+                exit();
+            } else {
+                // Normal flow: create transaction and show receipt
+                $sql = "INSERT INTO transactions (item_id, transaction_type) VALUES (?, 'pawn')";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("i", $item_id);
+                $stmt->execute();
+                header("Location: receipt.php?item_id=" . $item_id);
+                exit();
+            }
         } else {
             echo "Error: " . $sql . "<br>" . $conn->error;
         }

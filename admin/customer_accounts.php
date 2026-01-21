@@ -58,12 +58,12 @@ if ($res = $conn->query($sql)) {
 
 <div class="main-content-wrapper">
     <div class="container main-content py-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-3">
+        <div class="page-hero">
             <div>
-                <h2 class="mb-1">Customer Accounts</h2>
-                <p class="text-muted mb-0" style="font-size: 0.95rem;">Manage customer login credentials and verification status.</p>
+                <h2 class="page-hero-title"><i class="fas fa-id-badge"></i> Customer Accounts</h2>
+                <p class="page-hero-subtitle">Manage customer login credentials and verification status.</p>
             </div>
-            <div class="text-end">
+            <div class="page-hero-actions">
                 <div class="badge bg-light text-dark" style="padding:10px 14px; border:1px solid #e5e7eb; border-radius:10px; font-weight:600;">
                     Total Accounts: <?php echo count($accounts); ?>
                 </div>

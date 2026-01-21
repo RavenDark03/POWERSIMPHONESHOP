@@ -93,7 +93,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // For online registrations
     $registration_source = 'online';
     $is_verified = 0; // online users must complete KYC / verify email
-    $username = $email; // default username equals email
+    $account_status = 'pending'; // online registrations require staff approval
 
     // Create verification token and expiry
     try {
@@ -103,10 +103,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     $verification_expires = date('Y-m-d H:i:s', strtotime('+2 days'));
 
-    $sql = "INSERT INTO customers (customer_code, first_name, last_name, birthdate, email, username, password, registration_source, is_verified, verification_token, verification_expires) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO customers (customer_code, first_name, last_name, birthdate, email, username, password, registration_source, is_verified, account_status, verification_token, verification_expires) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     if ($stmt) {
-        $stmt->bind_param('ssssssssiss', $customer_code, $first_name, $last_name, $birthdate, $email, $username, $hashed_password, $registration_source, $is_verified, $verification_token, $verification_expires);
+        $stmt->bind_param('ssssssssisss', $customer_code, $first_name, $last_name, $birthdate, $email, $username, $hashed_password, $registration_source, $is_verified, $account_status, $verification_token, $verification_expires);
         if ($stmt->execute()) {
             // send verification email to customer
             if (file_exists(__DIR__ . '/includes/send_email.php')) {

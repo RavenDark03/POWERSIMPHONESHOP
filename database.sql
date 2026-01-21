@@ -139,3 +139,8 @@ ALTER TABLE customers
 ALTER TABLE customers
     ADD COLUMN password_reset_token VARCHAR(255) NULL AFTER verification_expires,
     ADD COLUMN password_reset_expires DATETIME NULL AFTER password_reset_token;
+
+-- Account approval status for online registrations
+-- 'approved' = can login (default for walk-in), 'pending' = awaiting staff approval, 'rejected' = denied
+ALTER TABLE customers
+    ADD COLUMN account_status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'approved' AFTER is_verified;

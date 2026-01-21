@@ -1,8 +1,8 @@
 <?php
-$servername = "sql106.infinityfree.com";
-$username = "if0_40823559";
-$password = "AXLLcfFYfOFK1";
-$dbname = "if0_40823559_pawnshop_db";
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "pawnshop_db";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);

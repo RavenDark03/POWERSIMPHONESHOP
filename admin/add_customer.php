@@ -20,6 +20,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     <script src="../js/zipcodes.js"></script>
     <style>
         .form-section { margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
+        .section-hidden { display: none; }
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
         .form-col { flex: 1; }
         .form-col input, .form-col select { width: 100%; box-sizing: border-box; }
@@ -49,12 +50,15 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             </div>
             <input type="hidden" name="action" value="add">
             
-            <div class="form-section">
+            <div class="form-section" id="section-personal">
                 <h3>Personal Information</h3>
                 <div class="form-row">
-                    <div class="form-col"><label>First Name</label><input type="text" name="first_name" required></div>
-                    <div class="form-col"><label>Middle Name</label><input type="text" name="middle_name"></div>
-                    <div class="form-col"><label>Last Name</label><input type="text" name="last_name" required></div>
+                    <div class="form-col"><label>First Name</label><input type="text" name="first_name" id="first_name" required></div>
+                    <div class="form-col"><label>Middle Name</label><input type="text" name="middle_name" id="middle_name"></div>
+                    <div class="form-col"><label>Last Name</label><input type="text" name="last_name" id="last_name" required></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col"><label for="birthdate">Date of Birth</label><input type="date" name="birthdate" id="birthdate" required></div>
                 </div>
                 <div class="form-row">
                     <div class="form-col"><label for="contact_number">Contact Number</label><input type="text" name="contact_number" id="contact_number" required placeholder="+63 9xxxxxxxxx" maxlength="14"></div>
@@ -63,7 +67,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 </div>
             </div>
 
-            <div class="form-section">
+            <div class="form-section section-hidden" id="section-present">
                 <h3>Present Address</h3>
                 <div class="form-row">
                     <div class="form-col"><label>Unit/House No.</label><input type="text" name="present_house_num" id="present_house_num" required></div>
@@ -94,7 +98,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                  </div>
             </div>
 
-            <div class="form-section">
+            <div class="form-section section-hidden" id="section-permanent">
                 <h3>Permanent Address</h3>
                 <div class="checkbox-container">
                     <label class="checkbox-label">
@@ -132,7 +136,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 </div>
             </div>
 
-            <div class="form-section">
+            <div class="form-section section-hidden" id="section-id">
                 <h3>Identification</h3>
                 <div class="form-row">
                     <div class="form-col">
@@ -212,6 +216,15 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             loadProvinces('present');
             loadProvinces('permanent');
 
+            const dobInput = document.getElementById('birthdate');
+            if (dobInput) {
+                const today = new Date();
+                today.setFullYear(today.getFullYear() - 18);
+                const maxDate = today.toISOString().split('T')[0];
+                dobInput.max = maxDate;
+                dobInput.min = '1900-01-01';
+            }
+
             const contactInput = document.getElementById('contact_number');
             if(!contactInput.value.startsWith('+63 ')) contactInput.value = '+63 ';
             contactInput.addEventListener('input', function(e) {
@@ -238,6 +251,58 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             contactInput.addEventListener('click', function() {
                 if (this.selectionStart < 4) this.setSelectionRange(4, 4);
             });
+
+            // Progressive reveal: show next section only when current required fields are filled
+            const sections = {
+                personal: {
+                    required: ['first_name','last_name','birthdate','contact_number','email'],
+                    next: 'section-present'
+                },
+                present: {
+                    required: ['present_house_num','present_street','present_subdivision','present_province','present_city','present_barangay','present_zip'],
+                    next: 'section-permanent'
+                },
+                permanent: {
+                    required: ['permanent_house_num','permanent_street','permanent_subdivision','permanent_province','permanent_city','permanent_barangay','permanent_zip'],
+                    next: 'section-id'
+                },
+                id: {
+                    required: ['id_type'],
+                    next: null
+                }
+            };
+
+            function isFilled(id) {
+                const el = document.getElementById(id);
+                if (!el) return false;
+                if (el.type === 'checkbox') return el.checked;
+                return (el.value || '').trim().length > 0;
+            }
+
+            function evaluateSection(key) {
+                const cfg = sections[key];
+                if (!cfg) return;
+                const complete = cfg.required.every(isFilled);
+                if (complete && cfg.next) {
+                    const nextEl = document.getElementById(cfg.next);
+                    if (nextEl) nextEl.classList.remove('section-hidden');
+                }
+            }
+
+            // expose for copyAddress
+            window.evaluateSection = evaluateSection;
+
+            // Attach listeners to required fields
+            Object.keys(sections).forEach(key => {
+                sections[key].required.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    ['input','change'].forEach(evt => el.addEventListener(evt, () => evaluateSection(key)));
+                });
+            });
+
+            // Initial check (in case of browser autofill)
+            ['personal','present','permanent'].forEach(evaluateSection);
         });
 
         // Restrict zip inputs to digits only (max 4 chars)
@@ -398,6 +463,9 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                  document.getElementById('permanent_city').innerHTML = '<option value="">Select Province First</option>';
                  document.getElementById('permanent_barangay').innerHTML = '<option value="">Select City First</option>';
             }
+
+            // Re-evaluate completion for permanent section after copy/reset
+            try { window.evaluateSection && window.evaluateSection('permanent'); } catch (e) {}
         }
     </script>
 </body>
