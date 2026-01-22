@@ -14,6 +14,9 @@ $fields = [
     'username' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
     'email' => FILTER_SANITIZE_EMAIL,
     'contact_number' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+    'present_house_num' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+    'present_street' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+    'present_subdivision' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
     'present_barangay' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
     'present_city' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
     'present_province' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
@@ -58,14 +61,19 @@ if (empty($input['present_barangay']) || empty($input['present_city']) || empty(
 }
 
 $sql = "UPDATE customers
-        SET username = ?, email = ?, contact_number = ?, present_barangay = ?, present_city = ?, present_province = ?, present_zip = ?
+        SET username = ?, email = ?, contact_number = ?, 
+            present_house_num = ?, present_street = ?, present_subdivision = ?,
+            present_barangay = ?, present_city = ?, present_province = ?, present_zip = ?
         WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param(
-    'sssssssi',
+    'ssssssssssi',
     $input['username'],
     $input['email'],
     $input['contact_number'],
+    $input['present_house_num'],
+    $input['present_street'],
+    $input['present_subdivision'],
     $input['present_barangay'],
     $input['present_city'],
     $input['present_province'],

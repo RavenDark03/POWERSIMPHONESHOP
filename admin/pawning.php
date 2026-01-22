@@ -45,18 +45,17 @@ function render_pawn_row($row) {
     ob_start();
     ?>
     <tr>
-        <td style="font-weight:600; color:#0a3d0a;"><?php echo sprintf('PT-%06d', $row['id']); ?></td>
+        <td class="fw-semibold text-success"><?php echo sprintf('PT-%06d', $row['id']); ?></td>
         <td><?php echo htmlspecialchars($row['customer_name']); ?></td>
         <td><?php echo htmlspecialchars($row['category_display']); ?></td>
         <td><?php echo htmlspecialchars($row['item_type_display']); ?></td>
         <td><?php echo htmlspecialchars($row['item_condition_display']); ?></td>
-        <td style="font-weight:500;">₱<?php echo number_format($row['loan_amount'], 2); ?></td>
+        <td class="fw-semibold">₱<?php echo number_format($row['loan_amount'], 2); ?></td>
         <td><?php echo date('M d, Y', strtotime($row['due_date'])); ?></td>
         <td><span class="status-pill">Pawned</span></td>
-        <td style="text-align: center;">
+        <td class="text-center">
             <a href="view_pawn.php?id=<?php echo $row['id']; ?>" class="action-icon view-icon" title="View Details"><i class="fas fa-eye"></i></a>
-            <a href="renew_pawn.php?id=<?php echo $row['id']; ?>" class="action-icon edit-icon" title="Renew"><i class="fas fa-sync-alt"></i></a>
-            <a href="redeem_pawn.php?id=<?php echo $row['id']; ?>" class="action-icon redeem-icon" title="Redeem"><i class="fas fa-hand-holding-usd"></i></a>
+            <a href="pawn_processing.php" class="action-icon edit-icon" title="Process Redemption/Renewal"><i class="fas fa-cash-register"></i></a>
         </td>
     </tr>
     <?php
@@ -73,7 +72,7 @@ if (isset($_GET['ajax'])) {
             echo render_pawn_row($row);
         }
     } else {
-        echo "<tr><td colspan='8' style='text-align:center; padding: 16px;'>No pawned items found.</td></tr>";
+        echo "<tr><td colspan='9' class='text-center py-3 text-muted'>No pawned items found.</td></tr>";
     }
     exit();
 }
@@ -91,16 +90,10 @@ $totalActive = ($pawnResult) ? $pawnResult->num_rows : 0;
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
     <style>
-        .pawning-header { margin-bottom: 20px; }
-        .pawning-header h2 { margin: 0 0 6px 0; }
-        .pawning-header p { margin: 0; color: #666; font-size: 0.9rem; }
-        .pawning-layout { display: flex; gap: 20px; align-items: flex-start; }
-        .pawning-main { flex: 1; }
-        .table-container { margin-top: 0; }
-        table.customer-table { margin-top: 0; }
         .status-pill { display: inline-block; padding: 5px 12px; border-radius: 14px; font-size: 0.83rem; font-weight: 600; background: #e8f5e9; color: #1f7a3b; }
         .action-icon { margin: 0 6px; font-size: 1.05rem; transition: transform 0.2s ease, color 0.2s ease; color: #0a3d0a; display: inline-block; }
         .action-icon:hover { transform: scale(1.12); color: #145214; }
@@ -108,11 +101,6 @@ $totalActive = ($pawnResult) ? $pawnResult->num_rows : 0;
         .edit-icon { color: #0a6abf; }
         .redeem-icon { color: #1f7a3b; }
         .redeem-icon:hover { color: #145214; }
-        .search-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 0.95rem; }
-        .side-card { width: 200px; padding-top: 65px; }
-        .quick-card { margin-top: 20px; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .quick-card h4 { margin: 0 0 10px 0; color: #0a3d0a; font-size: 0.9rem; }
-        .quick-card p { margin: 0; color: #666; font-size: 0.85rem; }
     </style>
 </head>
 <body class="has-sidebar">
@@ -123,21 +111,31 @@ $totalActive = ($pawnResult) ? $pawnResult->num_rows : 0;
     </header>
 
     <div class="main-content-wrapper">
-        <div class="container main-content">
-            <div class="pawning-header">
-                <h2>Pawning</h2>
-                <p>Manage active pawn tickets</p>
+        <div class="container main-content py-4">
+            <div class="page-hero">
+                <div>
+                    <h2 class="page-hero-title"><i class="fas fa-hand-holding-dollar"></i> Pawning</h2>
+                    <p class="page-hero-subtitle">Manage active pawn tickets.</p>
+                </div>
+                <div class="page-hero-actions">
+                    <div class="badge bg-light text-dark" style="padding:10px 14px; border:1px solid #e5e7eb; border-radius:10px; font-weight:600;">
+                        Active Tickets: <?php echo $totalActive; ?>
+                    </div>
+                    <a href="new_pawn.php" class="btn btn-primary btn-sm"><i class="fas fa-balance-scale"></i> New Appraisal</a>
+                </div>
             </div>
 
-            <div class="pawning-layout">
-                <div class="pawning-main">
-                    <div style="margin-bottom: 15px;">
-                        <input type="text" id="pawnSearch" class="search-input" placeholder="Search by description, brand, model, serial, customer, or PT#">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                        <div class="flex-grow-1">
+                            <input type="text" id="pawnSearch" class="form-control" placeholder="Search by description, brand, model, serial, customer, or PT#">
+                        </div>
                     </div>
 
-                    <div class="table-container">
-                        <table class="customer-table">
-                            <thead>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
                                 <tr>
                                     <th>Ticket #</th>
                                     <th>Customer</th>
@@ -146,8 +144,8 @@ $totalActive = ($pawnResult) ? $pawnResult->num_rows : 0;
                                     <th>Condition</th>
                                     <th>Loan Amount</th>
                                     <th>Due Date</th>
-                                    <th style="text-align:center;">status</th>
-                                    <th></th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="pawnTableBody">
@@ -157,19 +155,11 @@ $totalActive = ($pawnResult) ? $pawnResult->num_rows : 0;
                                         echo render_pawn_row($row);
                                     }
                                 } else {
-                                    echo "<tr><td colspan='8' style='text-align:center; padding: 16px;'>No pawned items found.</td></tr>";
+                                    echo "<tr><td colspan='9' class='text-center py-3 text-muted'>No pawned items found.</td></tr>";
                                 }
                                 ?>
                             </tbody>
                         </table>
-                    </div>
-                </div>
-
-                <div class="side-card">
-                    <a href="new_pawn.php" class="btn"><i class="fas fa-plus"></i> New Pawn</a>
-                    <div class="quick-card">
-                        <h4>Quick Stats</h4>
-                        <p><strong>Active:</strong> <?php echo $totalActive; ?> Items</p>
                     </div>
                 </div>
             </div>

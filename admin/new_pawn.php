@@ -7,7 +7,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     exit();
 }
 
-$sql = "SELECT id, CONCAT(first_name, ' ', last_name) AS name FROM customers";
+// Only show approved customers who are not archived/deleted for pawning
+$sql = "SELECT id, CONCAT(first_name, ' ', last_name) AS name FROM customers WHERE account_status = 'approved' AND is_deleted = 0 ORDER BY first_name, last_name";
 $customers = $conn->query($sql);
 
 ?>
@@ -16,7 +17,7 @@ $customers = $conn->query($sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Pawn</title>
+    <title>New Item Appraisal - Powersim</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -36,6 +37,15 @@ $customers = $conn->query($sql);
         textarea { min-height:72px; }
         .checkbox-container label { font-weight:400; text-transform:none; }
         .form-row .form-col .checkbox-container { margin-top:6px; }
+        .accessory-list { display:flex; flex-wrap:wrap; gap:8px 12px; align-items:flex-start; }
+        .accessory-list .form-check { min-width:110px; margin:0; }
+        .accessory-list .form-check-input { width:20px !important; height:20px !important; margin-top:2px; padding:0 !important; min-width:10px; min-height:10px; }
+        .accessory-list .form-check-label { margin-left:6px; font-weight:600; color:#333; font-size:0.85rem; letter-spacing:0.1px; }
+        .accessory-other { flex:1; min-width:220px; }
+        .accessory-add { display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap; width:100%; }
+        .accessory-add input { flex:1; min-width:200px; padding:7px 10px; }
+        #customAccessories { width:100%; margin-top:8px; }
+        .btn-ghost-sm { background:#f7f7f7; color:#2f3b2f; border:1px solid #dcdcdc; border-radius:8px; padding:8px 11px; font-weight:700; }
         /* Make loan amount visually prominent but sized consistently */
         #loan_amount { padding:12px; }
         /* Responsive tweaks */
@@ -57,9 +67,19 @@ $customers = $conn->query($sql);
         <div style="max-width: 100%; margin: 0 auto;">
             <!-- Removed separate header div, keeping it inside form for unified look like Add Customer if desired, or keep outside. Add Customer has H2 inside. -->
             
+            <?php 
+            // Determine if user is a clerk (cannot set loan amount)
+            $isClerk = (isset($_SESSION['role']) && $_SESSION['role'] === 'clerk');
+            $isAppraiser = (isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin', 'appraiser', 'manager']));
+            ?>
             <form action="pawn_process.php" method="post" id="pawnForm" class="admin-form">
-                <h2>New Pawn Transaction</h2>
+                <h2><i class="fas fa-balance-scale" style="color: #0a3d0a;"></i> New Item Appraisal</h2>
                 <input type="hidden" name="action" value="new_pawn">
+                <?php if ($isClerk): ?>
+                <input type="hidden" name="submission_type" value="pending_appraisal">
+                <?php else: ?>
+                <input type="hidden" name="submission_type" value="pending_manager_approval">
+                <?php endif; ?>
                 
                 <div class="form-section">
                     <h3>Customer Information</h3>
@@ -126,14 +146,38 @@ $customers = $conn->query($sql);
                         
                         <div class="form-group" style="margin-top: 15px;">
                             <label style="display: block; margin-bottom: 8px;">Accessories</label>
-                            <div class="checkbox-container" style="flex-wrap: wrap; gap: 15px;">
-                                <label style="text-transform: none; display: inline-flex; align-items: center; gap: 5px;"><input type="checkbox" name="accessories[]" value="Charger"> Charger</label>
-                                <label style="text-transform: none; display: inline-flex; align-items: center; gap: 5px;"><input type="checkbox" name="accessories[]" value="Original Box"> Original Box</label>
-                                <label style="text-transform: none; display: inline-flex; align-items: center; gap: 5px;"><input type="checkbox" name="accessories[]" value="Earphones"> Earphones</label>
-                                <label style="text-transform: none; display: inline-flex; align-items: center; gap: 5px;"><input type="checkbox" name="accessories[]" value="Receipt/Warranty"> Receipt</label>
-                                <label style="text-transform: none; display: inline-flex; align-items: center; gap: 5px;"><input type="checkbox" name="accessories[]" value="Case"> Case</label>
-                                <label style="text-transform: none; display: inline-flex; align-items: center; gap: 5px;"><input type="checkbox" name="accessories[]" value="Memory Card"> Memory Card</label>
+                            <div class="accessory-list">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="accessories[]" value="Charger" id="accCharger">
+                                    <label class="form-check-label" for="accCharger">Charger</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="accessories[]" value="Original Box" id="accBox">
+                                    <label class="form-check-label" for="accBox">Original Box</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="accessories[]" value="Earphones" id="accEarphones">
+                                    <label class="form-check-label" for="accEarphones">Earphones</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="accessories[]" value="Receipt/Warranty" id="accReceipt">
+                                    <label class="form-check-label" for="accReceipt">Receipt</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="accessories[]" value="Case" id="accCase">
+                                    <label class="form-check-label" for="accCase">Case</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="accessories[]" value="Memory Card" id="accMemory">
+                                    <label class="form-check-label" for="accMemory">Memory Card</label>
+                                </div>
                             </div>
+                            <div class="accessory-list" id="customAccessories"></div>
+                            <div class="accessory-add">
+                                <input type="text" class="input-soft" id="accNewText" placeholder="Add another accessory">
+                                <button type="button" id="accAddBtn" class="btn-ghost-sm">+ Add</button>
+                            </div>
+                            <small class="text-muted" style="display:block; margin-top:4px;">Each added item becomes its own checkbox above.</small>
                         </div>
                     </div>
 
@@ -181,6 +225,17 @@ $customers = $conn->query($sql);
                     </div>
                 </div>
                 
+                <?php if ($isClerk): ?>
+                <!-- Clerk view: Hide loan terms, submit for appraisal -->
+                <div class="form-section" style="background: #fff8e1; padding: 15px; border-radius: 8px; border: 1px solid #ffe082;">
+                    <p style="margin: 0; color: #f57c00;"><i class="fas fa-info-circle"></i> As a clerk, this item will be submitted for appraisal. An appraiser will set the loan amount and interest rate.</p>
+                </div>
+                <input type="hidden" name="loan_amount" value="0">
+                <input type="hidden" name="interest_rate" value="0">
+                <input type="hidden" name="due_date" id="due_date" value="">
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; background: #ff9800;"><i class="fas fa-paper-plane"></i> Submit for Appraisal</button>
+                <?php else: ?>
+                <!-- Appraiser/Admin view: Full loan terms -->
                 <div class="form-section">
                     <h3>Loan Terms</h3>
                     <div class="form-row">
@@ -199,7 +254,12 @@ $customers = $conn->query($sql);
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Create Pawn Transaction</button>
+                <div class="form-section" style="background: #e3f2fd; padding: 15px; border-radius: 8px; border: 1px solid #90caf9;">
+                    <p style="margin: 0; color: #1565c0;"><i class="fas fa-info-circle"></i> This appraisal will be submitted for manager review and approval before the pawn transaction is finalized.</p>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;"><i class="fas fa-clipboard-check"></i> Submit Appraisal for Approval</button>
+                <?php endif; ?>
             </form>
         </div>
     </div>
@@ -397,6 +457,42 @@ $customers = $conn->query($sql);
                 otherModelInput.required = false;
             }
         }
+
+        // Accessories: Add custom accessory as a new checkbox
+        const accAddBtn = document.getElementById('accAddBtn');
+        const accNewText = document.getElementById('accNewText');
+        const accCustomContainer = document.getElementById('customAccessories');
+
+        function addCustomAccessory(label) {
+            const text = (label || '').trim();
+            if (!text) return;
+            // prevent duplicates by label text (case-insensitive)
+            const existing = Array.from(document.querySelectorAll('input[name="accessories[]"]'))
+                .some(inp => (inp.value || '').toLowerCase() === text.toLowerCase());
+            if (existing) return;
+
+            const id = 'accCustom_' + Math.random().toString(36).slice(2, 8);
+            const wrap = document.createElement('div');
+            wrap.className = 'form-check';
+            wrap.innerHTML = `
+                <input class="form-check-input" type="checkbox" name="accessories[]" value="${text}" id="${id}" checked>
+                <label class="form-check-label" for="${id}">${text}</label>
+            `;
+            accCustomContainer?.appendChild(wrap);
+        }
+
+        accAddBtn?.addEventListener('click', () => {
+            addCustomAccessory(accNewText?.value || '');
+            if (accNewText) accNewText.value = '';
+        });
+
+        accNewText?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addCustomAccessory(accNewText.value || '');
+                accNewText.value = '';
+            }
+        });
     </script>
     </div>
     </div>

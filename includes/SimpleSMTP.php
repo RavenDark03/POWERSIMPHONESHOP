@@ -15,10 +15,10 @@ class SimpleSMTP {
         $this->pass = $pass;
     }
 
-    public function send($to, $subject, $body, $fromEmail, $fromName) {
+    public function send($to, $subject, $plainBody, $fromEmail, $fromName, $htmlBody = null) {
         $this->connect();
         $this->auth();
-        $this->sendMail($to, $subject, $body, $fromEmail, $fromName);
+        $this->sendMail($to, $subject, $plainBody, $fromEmail, $fromName, $htmlBody);
         $this->quit();
     }
 
@@ -39,18 +39,36 @@ class SimpleSMTP {
         $this->sendCommand(base64_encode($this->pass));
     }
 
-    private function sendMail($to, $subject, $body, $fromEmail, $fromName) {
+    private function sendMail($to, $subject, $plainBody, $fromEmail, $fromName, $htmlBody = null) {
         $this->sendCommand("MAIL FROM: <$fromEmail>");
         $this->sendCommand("RCPT TO: <$to>");
         $this->sendCommand("DATA");
 
+        $boundary = 'bnd_' . bin2hex(random_bytes(8));
+
         $headers = "MIME-Version: 1.0\r\n";
-        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+        if ($htmlBody) {
+            $headers .= "Content-Type: multipart/alternative; boundary=\"$boundary\"\r\n";
+        } else {
+            $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+        }
         $headers .= "From: $fromName <$fromEmail>\r\n";
         $headers .= "To: $to\r\n";
         $headers .= "Subject: $subject\r\n";
 
-        $message = $headers . "\r\n" . $body . "\r\n.";
+        $message = $headers . "\r\n";
+        if ($htmlBody) {
+            $message .= "--$boundary\r\n";
+            $message .= "Content-Type: text/plain; charset=UTF-8\r\n\r\n";
+            $message .= $plainBody . "\r\n\r\n";
+            $message .= "--$boundary\r\n";
+            $message .= "Content-Type: text/html; charset=UTF-8\r\n\r\n";
+            $message .= $htmlBody . "\r\n\r\n";
+            $message .= "--$boundary--";
+        } else {
+            $message .= $plainBody;
+        }
+        $message .= "\r\n.";
         $this->sendCommand($message);
     }
 

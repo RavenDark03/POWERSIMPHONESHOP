@@ -45,6 +45,26 @@ if (!$row) {
         .id-image { max-width: 100%; max-height: 400px; border: 1px solid #ddd; padding: 5px; border-radius: 4px; }
         .btn-back { background-color: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 20px; }
         .btn-back:hover { background-color: #5a6268; }
+        
+        /* Status Badge Styles */
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; display: inline-flex; align-items: center; gap: 5px; }
+        .status-badge.approved { background-color: #d4edda; color: #155724; }
+        .status-badge.pending { background-color: #fff3cd; color: #856404; }
+        .status-badge.rejected { background-color: #f8d7da; color: #721c24; }
+        
+        /* Action Buttons */
+        .status-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-approve { background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-approve:hover { background-color: #218838; }
+        .btn-reject { background-color: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-reject:hover { background-color: #c82333; }
+        .btn-pending { background-color: #ffc107; color: #333; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-pending:hover { background-color: #e0a800; }
+        
+        /* Success/Error Messages */
+        .alert { padding: 12px 20px; border-radius: 5px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
     </style>
 </head>
 <body class="has-sidebar">
@@ -59,6 +79,99 @@ if (!$row) {
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Customer Details: <?php echo $row['customer_code']; ?></h2>
             <a href="customers.php" class="btn-back"><i class="fas fa-arrow-left"></i> Back to List</a>
+        </div>
+
+        <?php if (isset($_GET['status_updated'])): ?>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                Account status has been updated to <strong><?php echo htmlspecialchars($_GET['status_updated']); ?></strong>.
+            </div>
+        <?php endif; ?>
+        
+        <?php if (isset($_GET['error'])): ?>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <?php echo $_GET['error'] === 'invalid_status' ? 'Invalid status value.' : 'Failed to update account status.'; ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- Account Status Section -->
+        <div class="view-section">
+            <h3>Account Status</h3>
+            <?php 
+            $account_status = $row['account_status'] ?? 'approved';
+            $status_icon = match($account_status) {
+                'approved' => 'fa-check-circle',
+                'pending' => 'fa-clock',
+                'rejected' => 'fa-times-circle',
+                default => 'fa-question-circle'
+            };
+            ?>
+            <div class="view-row">
+                <div class="view-label">Current Status:</div>
+                <div class="view-value">
+                    <span class="status-badge <?php echo $account_status; ?>">
+                        <i class="fas <?php echo $status_icon; ?>"></i>
+                        <?php echo ucfirst($account_status); ?>
+                    </span>
+                </div>
+            </div>
+            
+            <?php if ($account_status === 'pending'): ?>
+            <div class="view-row" style="border-bottom: none;">
+                <div class="view-label">Actions:</div>
+                <div class="view-value">
+                    <div class="status-actions">
+                        <form action="customer_status.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to APPROVE this account?');">
+                            <input type="hidden" name="customer_id" value="<?php echo $row['id']; ?>">
+                            <input type="hidden" name="status" value="approved">
+                            <button type="submit" class="btn-approve"><i class="fas fa-check"></i> Approve Account</button>
+                        </form>
+                        <form action="customer_status.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to REJECT this account?');">
+                            <input type="hidden" name="customer_id" value="<?php echo $row['id']; ?>">
+                            <input type="hidden" name="status" value="rejected">
+                            <button type="submit" class="btn-reject"><i class="fas fa-times"></i> Reject Account</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <?php elseif ($account_status === 'approved'): ?>
+            <div class="view-row" style="border-bottom: none;">
+                <div class="view-label">Actions:</div>
+                <div class="view-value">
+                    <div class="status-actions">
+                        <form action="customer_status.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to set this account to PENDING?');">
+                            <input type="hidden" name="customer_id" value="<?php echo $row['id']; ?>">
+                            <input type="hidden" name="status" value="pending">
+                            <button type="submit" class="btn-pending"><i class="fas fa-clock"></i> Set Pending</button>
+                        </form>
+                        <form action="customer_status.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to REJECT this account?');">
+                            <input type="hidden" name="customer_id" value="<?php echo $row['id']; ?>">
+                            <input type="hidden" name="status" value="rejected">
+                            <button type="submit" class="btn-reject"><i class="fas fa-times"></i> Reject Account</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <?php elseif ($account_status === 'rejected'): ?>
+            <div class="view-row" style="border-bottom: none;">
+                <div class="view-label">Actions:</div>
+                <div class="view-value">
+                    <div class="status-actions">
+                        <form action="customer_status.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to APPROVE this account?');">
+                            <input type="hidden" name="customer_id" value="<?php echo $row['id']; ?>">
+                            <input type="hidden" name="status" value="approved">
+                            <button type="submit" class="btn-approve"><i class="fas fa-check"></i> Approve Account</button>
+                        </form>
+                        <form action="customer_status.php" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to set this account to PENDING?');">
+                            <input type="hidden" name="customer_id" value="<?php echo $row['id']; ?>">
+                            <input type="hidden" name="status" value="pending">
+                            <button type="submit" class="btn-pending"><i class="fas fa-clock"></i> Set Pending</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
 
         <div class="view-section">

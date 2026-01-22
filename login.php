@@ -34,13 +34,19 @@
                     <div style="background-color:#fff3cd;color:#856404;padding:10px;border-radius:5px;margin-bottom:15px;border:1px solid #ffeeba;text-align:center;">Account is pending approval. Please wait for Admin.</div>
                 <?php elseif ($_GET['error'] === 'rejected'): ?>
                     <div style="background-color:#f8d7da;color:#721c24;padding:10px;border-radius:5px;margin-bottom:15px;border:1px solid #f5c6cb;text-align:center;">Your account has been rejected. Contact support.</div>
+                <?php elseif ($_GET['error'] === 'not_verified'): ?>
+                    <div style="background-color:#fff3cd;color:#856404;padding:10px;border-radius:5px;margin-bottom:15px;border:1px solid #ffeeba;text-align:center;">Please verify your email first. <a href="resend_verification.php">Resend verification email</a></div>
+                <?php elseif ($_GET['error'] === 'account_pending'): ?>
+                    <div style="background-color:#fff3cd;color:#856404;padding:10px;border-radius:5px;margin-bottom:15px;border:1px solid #ffeeba;text-align:center;"><i class="fas fa-clock"></i> Your account is awaiting staff approval. You will be notified once approved.</div>
+                <?php elseif ($_GET['error'] === 'account_rejected'): ?>
+                    <div style="background-color:#f8d7da;color:#721c24;padding:10px;border-radius:5px;margin-bottom:15px;border:1px solid #f5c6cb;text-align:center;"><i class="fas fa-times-circle"></i> Your account registration was rejected. Please contact support for more information.</div>
                 <?php else: ?>
                     <div style="background-color:#f8d7da;color:#721c24;padding:10px;border-radius:5px;margin-bottom:15px;border:1px solid #f5c6cb;text-align:center;">Invalid email or password.</div>
                 <?php endif; ?>
             <?php endif; ?>
             <div class="form-group">
                 <label for="identifier">Email or Username</label>
-                <input type="text" name="identifier" id="identifier">
+                <input type="text" name="identifier" id="identifier" required placeholder="Enter your email or username" autocomplete="username">
             </div>
             <div class="form-group">
                 <label for="password">Password</label>

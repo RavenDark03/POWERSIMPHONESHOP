@@ -58,9 +58,11 @@ $itemResult = $conn->query($itemSql);
 
 <div class="main-content-wrapper">
     <div class="container main-content">
-        <div style="margin-bottom: 18px;">
-            <h2 style="margin:0;">Archived Records</h2>
-            <p style="margin:4px 0 0; color:#666;">Review soft-deleted customers and archived pawn tickets/items.</p>
+        <div class="page-hero">
+            <div>
+                <h2 class="page-hero-title"><i class="fas fa-box-archive"></i> Archived Records</h2>
+                <p class="page-hero-subtitle">Review soft-deleted customers and archived pawn tickets/items.</p>
+            </div>
         </div>
 
         <div class="archived-wrapper">

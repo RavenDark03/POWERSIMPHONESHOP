@@ -12,6 +12,9 @@ if (!isset($_GET['id'])) {
     exit();
 }
 
+// Define renewal cooldown period in days
+define('RENEWAL_COOLDOWN_DAYS', 20);
+
 $id = $_GET['id'];
 $sql = "SELECT items.*, CONCAT(customers.first_name, ' ', customers.last_name) AS customer_name FROM items JOIN customers ON items.customer_id = customers.id WHERE items.id = ?";
 $stmt = $conn->prepare($sql);
@@ -19,6 +22,28 @@ $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
 $item = $result->fetch_assoc();
+
+// Check renewal eligibility (20-day constraint)
+$canRenew = true;
+$daysRemaining = 0;
+$lastRenewalDate = null;
+
+$renewalCheck = $conn->prepare("SELECT created_at FROM transactions WHERE item_id = ? AND transaction_type = 'renewal' ORDER BY created_at DESC LIMIT 1");
+$renewalCheck->bind_param("i", $id);
+$renewalCheck->execute();
+$renewalResult = $renewalCheck->get_result();
+
+if ($renewalResult->num_rows > 0) {
+    $lastRenewal = $renewalResult->fetch_assoc();
+    $lastRenewalDate = $lastRenewal['created_at'];
+    $daysSince = floor((time() - strtotime($lastRenewalDate)) / (24 * 60 * 60));
+    $daysRemaining = RENEWAL_COOLDOWN_DAYS - $daysSince;
+    
+    if ($daysRemaining > 0) {
+        $canRenew = false;
+    }
+}
+$renewalCheck->close();
 
 ?>
 <!DOCTYPE html>
@@ -50,6 +75,36 @@ $item = $result->fetch_assoc();
             </div>
 
             <div style="background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                
+                <?php if (!$canRenew): ?>
+                <!-- Renewal Not Allowed - Cooldown Period -->
+                <div style="text-align: center; padding: 30px 20px;">
+                    <div style="width: 80px; height: 80px; background: #fff3cd; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                        <i class="fas fa-hourglass-half" style="font-size: 35px; color: #856404;"></i>
+                    </div>
+                    <h3 style="color: #856404; margin: 0 0 10px;">Renewal Not Available Yet</h3>
+                    <p style="color: #666; margin: 0 0 20px;">This pawn ticket was recently renewed. A <?php echo RENEWAL_COOLDOWN_DAYS; ?>-day waiting period is required between renewals.</p>
+                    
+                    <div style="background: #fff3cd; padding: 20px; border-radius: 10px; border: 1px solid #ffeeba; margin-bottom: 20px;">
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Last Renewed:</strong> <?php echo date('M d, Y', strtotime($lastRenewalDate)); ?></p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Days Remaining:</strong> <span style="font-weight: 700; color: #856404;"><?php echo $daysRemaining; ?> day(s)</span></p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Renewal Available:</strong> <?php echo date('M d, Y', strtotime($lastRenewalDate . ' + ' . RENEWAL_COOLDOWN_DAYS . ' days')); ?></p>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef; text-align: left;">
+                        <p style="margin: 5px 0;"><strong>Customer:</strong> <?php echo $item['customer_name']; ?></p>
+                        <p style="margin: 5px 0;"><strong>Item:</strong> <?php echo $item['item_description']; ?> (<?php echo $item['category']; ?>)</p>
+                        <p style="margin: 5px 0;"><strong>Loan Amount:</strong> <span style="color: #2e7d32; font-weight: bold;">₱<?php echo number_format($item['loan_amount'], 2); ?></span></p>
+                        <p style="margin: 5px 0;"><strong>Current Due Date:</strong> <?php echo date('M d, Y', strtotime($item['due_date'])); ?></p>
+                    </div>
+                    
+                    <a href="pawn_processing.php" class="btn" style="display: inline-block; padding: 12px 24px; text-decoration: none;">
+                        <i class="fas fa-arrow-left"></i> Back to Processing
+                    </a>
+                </div>
+                
+                <?php else: ?>
+                <!-- Renewal Form -->
                 <form action="pawn_process.php" method="post">
                     <input type="hidden" name="action" value="renew_pawn">
                     <input type="hidden" name="id" value="<?php echo $item['id']; ?>">
@@ -73,12 +128,19 @@ $item = $result->fetch_assoc();
                         <p style="margin:4px 0;"><strong>Monthly Interest:</strong> <span id="calc-interest">₱0.00</span></p>
                         <p style="margin:4px 0;"><strong>Amount Due for Renewal:</strong> <span id="calc-renewal">₱0.00</span></p>
                     </div>
+                    
+                    <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; margin-top: 15px; border: 1px solid #c8e6c9;">
+                        <p style="margin: 0; font-size: 0.85rem; color: #2e7d32;">
+                            <i class="fas fa-info-circle"></i> After this renewal, the next renewal will be available after <?php echo RENEWAL_COOLDOWN_DAYS; ?> days.
+                        </p>
+                    </div>
 
                     <div style="margin-top: 25px;">
                         <button type="submit" class="btn" style="width: 100%; padding: 12px;">Confirm Renewal</button>
-                        <a href="pawning.php" style="display: block; text-align: center; margin-top: 15px; color: #666; text-decoration: none;">Cancel</a>
+                        <a href="pawn_processing.php" style="display: block; text-align: center; margin-top: 15px; color: #666; text-decoration: none;">Cancel</a>
                     </div>
                 </form>
+                <?php endif; ?>
             </div>
         </div>
     </div>

@@ -35,7 +35,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $first_name = $_POST['first_name'];
         $middle_name = $_POST['middle_name'];
         $last_name = $_POST['last_name'];
+        $birthdate = $_POST['birthdate'] ?? '';
         $contact_number = $_POST['contact_number'];
+
+        // Age validation: must be at least 18
+        $birth_ts = strtotime($birthdate);
+        $cutoff_ts = strtotime('-18 years');
+        if (!$birth_ts || $birth_ts > $cutoff_ts) {
+            echo "Error: Customer must be at least 18 years old.";
+            exit();
+        }
 
         // Present Address
         $present_house_num = $_POST['present_house_num'];
@@ -121,21 +130,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         $sql = "INSERT INTO customers (
-            customer_code, first_name, middle_name, last_name, contact_number,
+            customer_code, first_name, middle_name, last_name, birthdate, contact_number,
             present_house_num, present_street, present_subdivision, present_barangay, present_city, present_province, present_zip,
             permanent_house_num, permanent_street, permanent_subdivision, permanent_barangay, permanent_city, permanent_province, permanent_zip,
             id_type, other_id_type, id_image_front_path, id_image_back_path,
-            email, username, password, registration_source, is_verified
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            email, username, password, registration_source, is_verified, account_status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssssssssssssssssssssssssssi", 
-            $customer_code, $first_name, $middle_name, $last_name, $contact_number,
+        $account_status = 'approved'; // Admin-created customers are auto-approved
+        $bind_params = [
+            $customer_code, $first_name, $middle_name, $last_name, $birthdate, $contact_number,
             $present_house_num, $present_street, $present_subdivision, $present_barangay, $present_city, $present_province, $present_zip,
             $permanent_house_num, $permanent_street, $permanent_subdivision, $permanent_barangay, $permanent_city, $permanent_province, $permanent_zip,
             $id_type, $other_id_type, $id_image_front_path, $id_image_back_path,
-            $email, $username, $hashed_password, $registration_source, $is_verified
-        );
+            $email, $username, $hashed_password, $registration_source, $is_verified, $account_status
+        ];
+        // 28 strings + integer (is_verified) + string (account_status)
+        $bind_types = str_repeat('s', count($bind_params) - 2) . 'is';
+        $stmt->bind_param($bind_types, ...$bind_params);
 
         if ($stmt->execute()) {
             // send credentials email to customer for walk-in
@@ -159,6 +172,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $first_name = $_POST['first_name'];
         $middle_name = $_POST['middle_name'];
         $last_name = $_POST['last_name'];
+        $birthdate = $_POST['birthdate'] ?? '';
         $contact_number = $_POST['contact_number'];
 
         // username (editable)
@@ -210,6 +224,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $id_type, $other_id_type
         ];
         $types = "sssssssssssssssssssss";
+
+        if (!empty($birthdate)) {
+            $birth_ts = strtotime($birthdate);
+            $cutoff_ts = strtotime('-18 years');
+            if (!$birth_ts || $birth_ts > $cutoff_ts) {
+                echo "Error: Customer must be at least 18 years old.";
+                exit();
+            }
+            $sql_updates .= ", birthdate = ?";
+            $params[] = $birthdate;
+            $types .= "s";
+        }
 
         $code_sql = "SELECT customer_code FROM customers WHERE id = ?";
         $code_stmt = $conn->prepare($code_sql);
